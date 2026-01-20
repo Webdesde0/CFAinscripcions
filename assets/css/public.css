@@ -1,0 +1,594 @@
+/**
+ * CFA Inscripcions - Estils públics
+ */
+
+/* Variables CSS */
+:root {
+    --cfa-primary: #0073aa;
+    --cfa-primary-dark: #005a87;
+    --cfa-success: #46b450;
+    --cfa-warning: #ffb900;
+    --cfa-error: #dc3232;
+    --cfa-text: #333;
+    --cfa-text-light: #666;
+    --cfa-border: #ddd;
+    --cfa-bg: #f9f9f9;
+    --cfa-white: #fff;
+    --cfa-radius: 8px;
+    --cfa-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Wrapper principal */
+.cfa-inscripcio-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+/* Indicador de passos */
+.cfa-passos {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 40px;
+    padding: 0 20px;
+}
+
+.cfa-pas {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--cfa-text-light);
+}
+
+.cfa-pas-numero {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--cfa-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.cfa-pas-text {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.cfa-pas-actiu .cfa-pas-numero {
+    background: var(--cfa-primary);
+    color: var(--cfa-white);
+}
+
+.cfa-pas-actiu .cfa-pas-text {
+    color: var(--cfa-primary);
+}
+
+.cfa-pas-completat .cfa-pas-numero {
+    background: var(--cfa-success);
+    color: var(--cfa-white);
+}
+
+.cfa-pas-separador {
+    flex: 1;
+    height: 2px;
+    background: var(--cfa-border);
+    margin: 0 15px;
+    max-width: 80px;
+}
+
+/* Contingut dels passos */
+.cfa-pas-contingut {
+    display: none;
+}
+
+.cfa-pas-contingut-actiu {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.cfa-pas-contingut h2 {
+    margin: 0 0 10px;
+    font-size: 24px;
+    color: var(--cfa-text);
+    text-align: center;
+}
+
+.cfa-pas-descripcio {
+    text-align: center;
+    color: var(--cfa-text-light);
+    margin-bottom: 30px;
+}
+
+/* Llista de cursos */
+.cfa-cursos-llista {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.cfa-curs-card {
+    display: block;
+    cursor: pointer;
+    position: relative;
+}
+
+.cfa-curs-card input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.cfa-curs-card-contingut {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    background: var(--cfa-white);
+    border: 2px solid var(--cfa-border);
+    border-radius: var(--cfa-radius);
+    transition: all 0.2s ease;
+}
+
+.cfa-curs-card:hover .cfa-curs-card-contingut {
+    border-color: var(--cfa-primary);
+    box-shadow: var(--cfa-shadow);
+}
+
+.cfa-curs-card input:checked + .cfa-curs-card-contingut {
+    border-color: var(--cfa-primary);
+    background: rgba(0, 115, 170, 0.05);
+}
+
+.cfa-curs-icona {
+    font-size: 28px;
+    color: var(--curs-color, var(--cfa-primary));
+    width: 40px;
+    text-align: center;
+}
+
+.cfa-curs-imatge {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.cfa-curs-info {
+    flex: 1;
+}
+
+.cfa-curs-nom {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--cfa-text);
+}
+
+.cfa-curs-descripcio {
+    display: block;
+    font-size: 13px;
+    color: var(--cfa-text-light);
+    margin-top: 3px;
+}
+
+.cfa-curs-check {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--cfa-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.cfa-curs-check svg {
+    width: 14px;
+    height: 14px;
+    opacity: 0;
+    color: var(--cfa-white);
+}
+
+.cfa-curs-card input:checked + .cfa-curs-card-contingut .cfa-curs-check {
+    background: var(--cfa-primary);
+    border-color: var(--cfa-primary);
+}
+
+.cfa-curs-card input:checked + .cfa-curs-card-contingut .cfa-curs-check svg {
+    opacity: 1;
+}
+
+/* Calendari */
+.cfa-calendari-wrapper {
+    background: var(--cfa-white);
+    border-radius: var(--cfa-radius);
+    box-shadow: var(--cfa-shadow);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.cfa-calendari-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.cfa-calendari-mes-any {
+    font-size: 18px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.cfa-calendari-nav {
+    background: none;
+    border: 1px solid var(--cfa-border);
+    border-radius: 4px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.cfa-calendari-nav:hover {
+    background: var(--cfa-bg);
+    border-color: var(--cfa-primary);
+}
+
+.cfa-calendari-nav:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.cfa-calendari-dies-setmana {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.cfa-calendari-dies-setmana span {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--cfa-text-light);
+    padding: 8px 0;
+}
+
+.cfa-calendari-dies {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.cfa-dia {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: default;
+    transition: all 0.2s ease;
+}
+
+.cfa-dia-buit {
+    background: transparent;
+}
+
+.cfa-dia-passat,
+.cfa-dia-no-disponible {
+    color: #ccc;
+}
+
+.cfa-dia-disponible {
+    background: var(--cfa-bg);
+    color: var(--cfa-text);
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.cfa-dia-disponible:hover {
+    background: var(--cfa-primary);
+    color: var(--cfa-white);
+}
+
+.cfa-dia-seleccionat {
+    background: var(--cfa-primary);
+    color: var(--cfa-white);
+}
+
+.cfa-dia-avui {
+    border: 2px solid var(--cfa-primary);
+}
+
+/* Franges horàries */
+.cfa-franges-wrapper {
+    margin-top: 20px;
+}
+
+.cfa-franges-wrapper h3 {
+    font-size: 16px;
+    margin-bottom: 15px;
+}
+
+.cfa-franges-llista {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+.cfa-franja {
+    padding: 12px 15px;
+    background: var(--cfa-white);
+    border: 2px solid var(--cfa-border);
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cfa-franja:hover {
+    border-color: var(--cfa-primary);
+}
+
+.cfa-franja-seleccionada {
+    background: var(--cfa-primary);
+    border-color: var(--cfa-primary);
+    color: var(--cfa-white);
+}
+
+.cfa-franja-hora {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.cfa-franja-places {
+    font-size: 11px;
+    color: var(--cfa-text-light);
+    margin-top: 3px;
+}
+
+.cfa-franja-seleccionada .cfa-franja-places {
+    color: rgba(255,255,255,0.8);
+}
+
+/* Formulari de dades */
+.cfa-resum-seleccio {
+    background: var(--cfa-bg);
+    border-left: 4px solid var(--cfa-primary);
+    padding: 15px 20px;
+    margin-bottom: 25px;
+    border-radius: 0 var(--cfa-radius) var(--cfa-radius) 0;
+}
+
+.cfa-resum-seleccio p {
+    margin: 5px 0;
+}
+
+.cfa-formulari-camps {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.cfa-camp-fila {
+    display: flex;
+    gap: 15px;
+}
+
+.cfa-camp {
+    flex: 1;
+}
+
+.cfa-camp-petit {
+    flex: 0 0 120px;
+}
+
+.cfa-camp label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.cfa-camp label .required {
+    color: var(--cfa-error);
+}
+
+.cfa-camp input[type="text"],
+.cfa-camp input[type="email"],
+.cfa-camp input[type="tel"],
+.cfa-camp input[type="date"],
+.cfa-camp select,
+.cfa-camp textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--cfa-border);
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+    box-sizing: border-box;
+}
+
+.cfa-camp input:focus,
+.cfa-camp select:focus,
+.cfa-camp textarea:focus {
+    outline: none;
+    border-color: var(--cfa-primary);
+}
+
+.cfa-camp-checkbox {
+    margin-top: 10px;
+}
+
+.cfa-camp-checkbox label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.cfa-camp-checkbox input[type="checkbox"] {
+    margin-top: 3px;
+}
+
+/* Botons */
+.cfa-pas-botons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    gap: 15px;
+}
+
+.cfa-boto {
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.cfa-boto-primari {
+    background: var(--cfa-primary);
+    color: var(--cfa-white);
+}
+
+.cfa-boto-primari:hover {
+    background: var(--cfa-primary-dark);
+}
+
+.cfa-boto-primari:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.cfa-boto-secundari {
+    background: var(--cfa-white);
+    color: var(--cfa-text);
+    border: 1px solid var(--cfa-border);
+}
+
+.cfa-boto-secundari:hover {
+    background: var(--cfa-bg);
+}
+
+.cfa-boto-icona {
+    font-size: 18px;
+}
+
+.cfa-boto-seguent {
+    margin-left: auto;
+}
+
+/* Pàgina d'èxit */
+.cfa-pas-exit {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.cfa-exit-icona {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+}
+
+.cfa-exit-icona svg {
+    width: 100%;
+    height: 100%;
+    color: var(--cfa-success);
+}
+
+.cfa-exit-detalls {
+    background: var(--cfa-bg);
+    padding: 20px;
+    border-radius: var(--cfa-radius);
+    margin-top: 20px;
+    text-align: left;
+}
+
+/* Avís sense cursos */
+.cfa-inscripcio-avís {
+    text-align: center;
+    padding: 40px;
+    background: var(--cfa-bg);
+    border-radius: var(--cfa-radius);
+    color: var(--cfa-text-light);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .cfa-pas-text {
+        display: none;
+    }
+
+    .cfa-pas-separador {
+        max-width: 40px;
+    }
+
+    .cfa-camp-fila {
+        flex-direction: column;
+    }
+
+    .cfa-camp-petit {
+        flex: 1;
+    }
+
+    .cfa-pas-botons {
+        flex-direction: column-reverse;
+    }
+
+    .cfa-boto {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .cfa-boto-seguent {
+        margin-left: 0;
+    }
+}
+
+/* Loading state */
+.cfa-loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.cfa-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid var(--cfa-border);
+    border-top-color: var(--cfa-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
