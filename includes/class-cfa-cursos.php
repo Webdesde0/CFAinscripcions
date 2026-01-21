@@ -21,7 +21,13 @@ class CFA_Cursos {
     }
 
     private function __construct() {
-        add_action('init', array(__CLASS__, 'register_post_type'));
+        // Registrar CPT directament si init ja ha passat, sinó via hook
+        if (did_action('init')) {
+            self::register_post_type();
+        } else {
+            add_action('init', array(__CLASS__, 'register_post_type'));
+        }
+
         add_action('add_meta_boxes', array($this, 'add_meta_boxes'));
         add_action('save_post_cfa_curs', array($this, 'save_meta_boxes'), 10, 2);
 
