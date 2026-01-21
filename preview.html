@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CFA Inscripcions - Preview Adaptat</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Roboto+Slab:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>CFA Inscripcions - Preview</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* Reset i base */
         * {
             margin: 0;
             padding: 0;
@@ -15,7 +14,7 @@
 
         body {
             font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f9f9f9;
+            background: #f5f5f5;
             color: #333;
             line-height: 1.6;
         }
@@ -26,8 +25,6 @@
             --cfa-green-dark: #3da354;
             --cfa-green-light: #e8f5e9;
             --cfa-green-pale: #f0f9f1;
-            --cfa-beige: #C4B9A7;
-            --cfa-beige-light: #d4cabb;
             --cfa-text: #333333;
             --cfa-text-light: #666666;
             --cfa-white: #ffffff;
@@ -37,63 +34,14 @@
             --cfa-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
 
-        /* Header simulat CFA */
-        .site-topbar {
-            background: var(--cfa-beige);
-            padding: 10px 20px;
-            display: flex;
-            justify-content: flex-end;
-            gap: 25px;
+        /* Nota informativa */
+        .preview-notice {
+            background: #fff3cd;
+            border-bottom: 1px solid #ffc107;
+            padding: 12px 20px;
+            text-align: center;
             font-size: 14px;
-        }
-
-        .site-topbar a {
-            color: var(--cfa-white);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .site-header {
-            background: var(--cfa-white);
-            padding: 20px 40px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-
-        .site-logo {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .site-logo-icon {
-            width: 50px;
-            height: 60px;
-            background: linear-gradient(to bottom, #333 0%, #333 80%, transparent 80%);
-            clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
-        }
-
-        .site-logo-text {
-            font-family: 'Roboto Slab', serif;
-            font-size: 18px;
-            color: var(--cfa-text);
-            line-height: 1.3;
-        }
-
-        .site-nav {
-            display: flex;
-            gap: 30px;
-        }
-
-        .site-nav a {
-            color: var(--cfa-text);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 15px;
+            color: #856404;
         }
 
         /* Navegació de preview */
@@ -132,7 +80,7 @@
 
         /* Contenidor principal */
         .page-content {
-            max-width: 900px;
+            max-width: 700px;
             margin: 40px auto;
             padding: 0 20px;
         }
@@ -144,11 +92,10 @@
 
         .page-title h2 {
             font-family: 'Montserrat', sans-serif;
-            font-size: 36px;
+            font-size: 32px;
             color: var(--cfa-green);
             margin-bottom: 10px;
             font-weight: 700;
-            font-style: italic;
         }
 
         .page-title p {
@@ -156,13 +103,12 @@
             font-size: 16px;
         }
 
-        /* Wrapper principal del formulari */
+        /* Wrapper del formulari */
         .cfa-inscripcio-wrapper {
             background: var(--cfa-white);
             border-radius: var(--cfa-radius);
             box-shadow: var(--cfa-shadow);
-            padding: 40px;
-            border: 2px solid var(--cfa-green-light);
+            padding: 35px;
         }
 
         /* Indicador de passos */
@@ -170,42 +116,37 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 40px;
-            padding: 0 20px;
+            margin-bottom: 35px;
         }
 
         .cfa-pas {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             color: var(--cfa-text-light);
         }
 
         .cfa-pas-numero {
-            width: 44px;
-            height: 44px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             background: #e0e0e0;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 16px;
-            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
             transition: all 0.3s ease;
         }
 
         .cfa-pas-text {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         .cfa-pas-actiu .cfa-pas-numero {
             background: var(--cfa-green);
             color: white;
-            box-shadow: 0 4px 15px rgba(76, 185, 99, 0.4);
         }
 
         .cfa-pas-actiu .cfa-pas-text {
@@ -218,15 +159,12 @@
         }
 
         .cfa-pas-separador {
-            flex: 1;
-            height: 3px;
+            width: 60px;
+            height: 2px;
             background: #e0e0e0;
-            margin: 0 20px;
-            max-width: 100px;
-            border-radius: 2px;
+            margin: 0 12px;
         }
 
-        .cfa-pas-completat + .cfa-pas-separador,
         .cfa-pas-separador.completed {
             background: var(--cfa-green);
         }
@@ -234,7 +172,7 @@
         /* Contingut dels passos */
         .cfa-pas-contingut {
             display: none;
-            animation: fadeIn 0.4s ease;
+            animation: fadeIn 0.3s ease;
         }
 
         .cfa-pas-contingut.active {
@@ -242,124 +180,113 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .cfa-pas-contingut h2 {
-            margin: 0 0 10px;
+        .cfa-pas-contingut h3 {
             font-family: 'Montserrat', sans-serif;
-            font-size: 28px;
+            font-size: 22px;
             color: var(--cfa-text);
             text-align: center;
+            margin-bottom: 8px;
             font-weight: 700;
         }
 
         .cfa-pas-descripcio {
             text-align: center;
             color: var(--cfa-text-light);
-            margin-bottom: 35px;
-            font-size: 15px;
+            margin-bottom: 25px;
+            font-size: 14px;
         }
 
-        /* Llista de cursos - Estil CFA */
+        /* Cards de cursos - COMPACTES */
         .cfa-cursos-llista {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            margin-bottom: 30px;
+            gap: 10px;
+            margin-bottom: 25px;
         }
 
         .cfa-curs-card {
             display: block;
             cursor: pointer;
-            position: relative;
         }
 
         .cfa-curs-card input[type="radio"] {
             position: absolute;
             opacity: 0;
+            pointer-events: none;
         }
 
         .cfa-curs-card-contingut {
             display: flex;
             align-items: center;
-            background: var(--cfa-green-pale);
-            border: 2px solid transparent;
+            gap: 15px;
+            padding: 16px 20px;
+            background: var(--cfa-white);
+            border: 2px solid var(--cfa-border);
             border-radius: var(--cfa-radius);
-            transition: all 0.25s ease;
-            overflow: hidden;
-        }
-
-        .cfa-curs-badge {
-            background: var(--cfa-green);
-            color: white;
-            padding: 20px 18px;
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            writing-mode: vertical-lr;
-            text-orientation: mixed;
-            transform: rotate(180deg);
-            min-height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .cfa-curs-info {
-            flex: 1;
-            padding: 20px 25px;
-        }
-
-        .cfa-curs-nom {
-            display: block;
-            font-family: 'Montserrat', sans-serif;
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--cfa-text);
-            margin-bottom: 5px;
-        }
-
-        .cfa-curs-descripcio {
-            display: block;
-            font-size: 14px;
-            color: var(--cfa-text-light);
-        }
-
-        .cfa-curs-check {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: 3px solid #ccc;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 20px;
-            transition: all 0.25s ease;
-            flex-shrink: 0;
-            background: white;
-        }
-
-        .cfa-curs-check svg {
-            width: 18px;
-            height: 18px;
-            opacity: 0;
-            color: white;
             transition: all 0.2s ease;
         }
 
         .cfa-curs-card:hover .cfa-curs-card-contingut {
             border-color: var(--cfa-green);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(76, 185, 99, 0.15);
+            background: var(--cfa-green-pale);
         }
 
         .cfa-curs-card input:checked + .cfa-curs-card-contingut {
             border-color: var(--cfa-green);
             background: var(--cfa-green-light);
-            box-shadow: 0 6px 20px rgba(76, 185, 99, 0.2);
+        }
+
+        .cfa-curs-icona {
+            font-size: 28px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .cfa-curs-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .cfa-curs-nom {
+            display: block;
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--cfa-text);
+            margin-bottom: 2px;
+        }
+
+        .cfa-curs-descripcio {
+            display: block;
+            font-size: 13px;
+            color: var(--cfa-text-light);
+        }
+
+        .cfa-curs-check {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: white;
+            transition: all 0.2s ease;
+        }
+
+        .cfa-curs-check svg {
+            width: 14px;
+            height: 14px;
+            opacity: 0;
+            color: white;
         }
 
         .cfa-curs-card input:checked + .cfa-curs-card-contingut .cfa-curs-check {
@@ -375,38 +302,36 @@
         .cfa-calendari-wrapper {
             background: var(--cfa-green-pale);
             border-radius: var(--cfa-radius);
-            padding: 25px;
-            margin-bottom: 25px;
-            border: 1px solid var(--cfa-green-light);
+            padding: 20px;
+            margin-bottom: 20px;
         }
 
         .cfa-calendari-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .cfa-calendari-mes-any {
             font-family: 'Montserrat', sans-serif;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
             color: var(--cfa-green);
-            text-transform: capitalize;
         }
 
         .cfa-calendari-nav {
             background: var(--cfa-white);
             border: 2px solid var(--cfa-green);
             color: var(--cfa-green);
-            border-radius: var(--cfa-radius-pill);
-            width: 44px;
-            height: 44px;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             transition: all 0.2s ease;
         }
@@ -419,24 +344,23 @@
         .cfa-calendari-dies-setmana {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 8px;
-            margin-bottom: 12px;
+            gap: 5px;
+            margin-bottom: 8px;
         }
 
         .cfa-calendari-dies-setmana span {
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
             color: var(--cfa-green);
-            padding: 10px 0;
+            padding: 8px 0;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         .cfa-calendari-dies {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 8px;
+            gap: 5px;
         }
 
         .cfa-dia {
@@ -444,17 +368,15 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 10px;
-            font-size: 14px;
+            border-radius: 8px;
+            font-size: 13px;
             font-weight: 500;
             cursor: default;
             transition: all 0.2s ease;
             background: var(--cfa-white);
         }
 
-        .cfa-dia-buit {
-            background: transparent;
-        }
+        .cfa-dia-buit { background: transparent; }
 
         .cfa-dia-passat,
         .cfa-dia-no-disponible {
@@ -463,25 +385,22 @@
         }
 
         .cfa-dia-disponible {
-            background: var(--cfa-white);
             color: var(--cfa-green);
             cursor: pointer;
             font-weight: 600;
-            border: 2px solid var(--cfa-green-light);
+            border: 1px solid var(--cfa-green-light);
         }
 
         .cfa-dia-disponible:hover {
             background: var(--cfa-green);
             color: white;
             border-color: var(--cfa-green);
-            transform: scale(1.08);
         }
 
         .cfa-dia-seleccionat {
             background: var(--cfa-green) !important;
             color: white !important;
             border-color: var(--cfa-green) !important;
-            box-shadow: 0 4px 12px rgba(76, 185, 99, 0.4);
         }
 
         .cfa-dia-avui {
@@ -489,69 +408,67 @@
         }
 
         /* Franges horàries */
-        .cfa-franges-wrapper h3 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 16px;
-            margin-bottom: 15px;
+        .cfa-franges-wrapper h4 {
+            font-size: 14px;
+            margin-bottom: 12px;
             color: var(--cfa-text);
             font-weight: 600;
         }
 
         .cfa-franges-llista {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .cfa-franja {
-            padding: 15px 12px;
+            padding: 12px 20px;
             background: var(--cfa-white);
-            border: 2px solid var(--cfa-green-light);
+            border: 2px solid var(--cfa-border);
             border-radius: var(--cfa-radius-pill);
             text-align: center;
             cursor: pointer;
             transition: all 0.2s ease;
+            min-width: 90px;
         }
 
         .cfa-franja:hover {
             border-color: var(--cfa-green);
-            transform: translateY(-2px);
         }
 
         .cfa-franja-seleccionada {
             background: var(--cfa-green);
             border-color: var(--cfa-green);
             color: white;
-            box-shadow: 0 4px 12px rgba(76, 185, 99, 0.3);
         }
 
         .cfa-franja-hora {
             font-weight: 700;
-            font-size: 15px;
+            font-size: 14px;
         }
 
         .cfa-franja-places {
-            font-size: 11px;
+            font-size: 10px;
             color: var(--cfa-text-light);
-            margin-top: 3px;
+            margin-top: 2px;
         }
 
         .cfa-franja-seleccionada .cfa-franja-places {
-            color: rgba(255,255,255,0.85);
+            color: rgba(255,255,255,0.8);
         }
 
         /* Resum */
         .cfa-resum-seleccio {
             background: var(--cfa-green-light);
             border-left: 4px solid var(--cfa-green);
-            padding: 20px 25px;
-            margin-bottom: 30px;
+            padding: 15px 20px;
+            margin-bottom: 25px;
             border-radius: 0 var(--cfa-radius) var(--cfa-radius) 0;
+            font-size: 14px;
         }
 
         .cfa-resum-seleccio p {
-            margin: 6px 0;
-            font-size: 15px;
+            margin: 4px 0;
         }
 
         .cfa-resum-seleccio strong {
@@ -562,12 +479,12 @@
         .cfa-formulari-camps {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 15px;
         }
 
         .cfa-camp-fila {
             display: flex;
-            gap: 20px;
+            gap: 15px;
         }
 
         .cfa-camp {
@@ -575,14 +492,14 @@
         }
 
         .cfa-camp-petit {
-            flex: 0 0 140px;
+            flex: 0 0 120px;
         }
 
         .cfa-camp label {
             display: block;
             font-weight: 600;
-            margin-bottom: 8px;
-            font-size: 14px;
+            margin-bottom: 6px;
+            font-size: 13px;
             color: var(--cfa-text);
         }
 
@@ -590,20 +507,16 @@
             color: #e74c3c;
         }
 
-        .cfa-camp input[type="text"],
-        .cfa-camp input[type="email"],
-        .cfa-camp input[type="tel"],
-        .cfa-camp input[type="date"],
+        .cfa-camp input,
         .cfa-camp select,
         .cfa-camp textarea {
             width: 100%;
-            padding: 14px 16px;
+            padding: 12px 14px;
             border: 2px solid var(--cfa-border);
-            border-radius: var(--cfa-radius);
-            font-size: 15px;
+            border-radius: 8px;
+            font-size: 14px;
             font-family: inherit;
             transition: all 0.2s ease;
-            background: var(--cfa-white);
         }
 
         .cfa-camp input:focus,
@@ -611,25 +524,24 @@
         .cfa-camp textarea:focus {
             outline: none;
             border-color: var(--cfa-green);
-            box-shadow: 0 0 0 4px rgba(76, 185, 99, 0.1);
         }
 
         .cfa-camp-checkbox {
-            margin-top: 15px;
+            margin-top: 10px;
         }
 
         .cfa-camp-checkbox label {
             display: flex;
             align-items: flex-start;
-            gap: 12px;
+            gap: 10px;
             font-weight: normal;
             cursor: pointer;
         }
 
         .cfa-camp-checkbox input[type="checkbox"] {
-            margin-top: 4px;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
             accent-color: var(--cfa-green);
         }
 
@@ -637,28 +549,26 @@
             color: var(--cfa-green);
         }
 
-        /* Botons estil CFA */
+        /* Botons */
         .cfa-pas-botons {
             display: flex;
             justify-content: space-between;
-            margin-top: 35px;
+            margin-top: 25px;
             gap: 15px;
         }
 
         .cfa-boto {
-            padding: 16px 32px;
+            padding: 14px 28px;
             border-radius: var(--cfa-radius-pill);
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            transition: all 0.25s ease;
+            gap: 8px;
+            transition: all 0.2s ease;
             border: 2px solid transparent;
             font-family: inherit;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         .cfa-boto-primari {
@@ -670,8 +580,6 @@
         .cfa-boto-primari:hover {
             background: var(--cfa-green-dark);
             border-color: var(--cfa-green-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(76, 185, 99, 0.35);
         }
 
         .cfa-boto-secundari {
@@ -684,10 +592,6 @@
             background: var(--cfa-green-light);
         }
 
-        .cfa-boto-icona {
-            font-size: 18px;
-        }
-
         .cfa-boto-seguent {
             margin-left: auto;
         }
@@ -695,13 +599,13 @@
         /* Pàgina d'èxit */
         .cfa-pas-exit {
             text-align: center;
-            padding: 50px 20px;
+            padding: 40px 20px;
         }
 
         .cfa-exit-icona {
-            width: 100px;
-            height: 100px;
-            margin: 0 auto 25px;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
             background: var(--cfa-green-light);
             border-radius: 50%;
             display: flex;
@@ -710,134 +614,49 @@
         }
 
         .cfa-exit-icona svg {
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             color: var(--cfa-green);
         }
 
-        .cfa-pas-exit h2 {
+        .cfa-pas-exit h3 {
             color: var(--cfa-green);
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .cfa-exit-detalls {
             background: var(--cfa-green-pale);
-            padding: 25px;
+            padding: 20px;
             border-radius: var(--cfa-radius);
-            margin-top: 25px;
+            margin-top: 20px;
             text-align: left;
-            max-width: 400px;
+            max-width: 350px;
             margin-left: auto;
             margin-right: auto;
-            border: 1px solid var(--cfa-green-light);
-        }
-
-        /* Footer */
-        .site-footer {
-            background: var(--cfa-beige);
-            color: white;
-            text-align: center;
-            padding: 30px 20px;
-            margin-top: 50px;
-        }
-
-        .site-footer p {
-            opacity: 0.9;
             font-size: 14px;
         }
 
         /* Responsive */
-        @media (max-width: 768px) {
-            .site-header {
-                flex-direction: column;
-                gap: 20px;
-                text-align: center;
-            }
-
-            .cfa-inscripcio-wrapper {
-                padding: 25px 20px;
-            }
-
-            .cfa-pas-text {
-                display: none;
-            }
-
-            .cfa-pas-separador {
-                max-width: 50px;
-                margin: 0 10px;
-            }
-
-            .cfa-camp-fila {
-                flex-direction: column;
-            }
-
-            .cfa-camp-petit {
-                flex: 1;
-            }
-
-            .cfa-pas-botons {
-                flex-direction: column-reverse;
-            }
-
-            .cfa-boto {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .cfa-boto-seguent {
-                margin-left: 0;
-            }
-
-            .cfa-curs-badge {
-                writing-mode: horizontal-tb;
-                transform: none;
-                padding: 10px 15px;
-                min-height: auto;
-            }
-
-            .cfa-curs-card-contingut {
-                flex-direction: column;
-            }
-
-            .cfa-curs-info {
-                padding: 15px;
-                text-align: center;
-            }
-
-            .cfa-curs-check {
-                margin: 0 0 15px 0;
-            }
+        @media (max-width: 600px) {
+            .cfa-inscripcio-wrapper { padding: 25px 20px; }
+            .cfa-pas-text { display: none; }
+            .cfa-pas-separador { width: 40px; margin: 0 8px; }
+            .cfa-camp-fila { flex-direction: column; }
+            .cfa-camp-petit { flex: 1; }
+            .cfa-pas-botons { flex-direction: column-reverse; }
+            .cfa-boto { width: 100%; justify-content: center; }
+            .cfa-boto-seguent { margin-left: 0; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Top bar CFA -->
-    <div class="site-topbar">
-        <a href="#">📞 972271445</a>
-        <a href="#">✉️ cfalagarrotxa@xtec.cat</a>
-        <a href="#">Intranet</a>
-        <a href="#">Moodle</a>
+    <!-- Nota informativa -->
+    <div class="preview-notice">
+        ⚠️ Aquesta és una preview del formulari. El plugin NO modifica el header ni el footer de la vostra web.
     </div>
 
-    <!-- Header CFA -->
-    <header class="site-header">
-        <div class="site-logo">
-            <div class="site-logo-icon"></div>
-            <div class="site-logo-text">
-                Centre de<br>
-                <strong>Formació d'Adults</strong><br>
-                la Garrotxa
-            </div>
-        </div>
-        <nav class="site-nav">
-            <a href="#">Centre</a>
-            <a href="#">Serveis</a>
-            <a href="#">Contacte</a>
-        </nav>
-    </header>
-
-    <!-- Navegació entre vistes de preview -->
+    <!-- Navegació de preview -->
     <nav class="preview-nav">
         <button class="active" onclick="showStep(1)">Pas 1: Cursos</button>
         <button onclick="showStep(2)">Pas 2: Calendari</button>
@@ -845,11 +664,11 @@
         <button onclick="showStep(4)">Confirmació</button>
     </nav>
 
-    <!-- Contingut de la pàgina -->
+    <!-- Contingut -->
     <main class="page-content">
         <div class="page-title">
-            <h2>Matrícula viva</h2>
-            <p>Curs 2025-2026 · Omple el formulari per sol·licitar la teva inscripció</p>
+            <h2>Inscripció als cursos</h2>
+            <p>Omple el formulari per sol·licitar la teva inscripció</p>
         </div>
 
         <div class="cfa-inscripcio-wrapper">
@@ -871,19 +690,19 @@
                 </div>
             </div>
 
-            <!-- PAS 1: Selecció de curs -->
+            <!-- PAS 1: Cursos -->
             <div class="cfa-pas-contingut active" id="step-1">
-                <h2>Selecciona el curs</h2>
-                <p class="cfa-pas-descripcio">Tria l'ensenyament en el qual vols inscriure't</p>
+                <h3>Selecciona el curs</h3>
+                <p class="cfa-pas-descripcio">Tria el curs en el qual vols inscriure't</p>
 
                 <div class="cfa-cursos-llista">
                     <label class="cfa-curs-card">
                         <input type="radio" name="curs" checked>
                         <div class="cfa-curs-card-contingut">
-                            <span class="cfa-curs-badge">Llengua Catalana</span>
+                            <span class="cfa-curs-icona">📚</span>
                             <div class="cfa-curs-info">
-                                <span class="cfa-curs-nom">Estudi de Català 1 (A1) i Català 2 (A2)</span>
-                                <span class="cfa-curs-descripcio">Certificats A1 i A2 de llengua catalana</span>
+                                <span class="cfa-curs-nom">Català</span>
+                                <span class="cfa-curs-descripcio">Cursos de llengua catalana per a adults</span>
                             </div>
                             <span class="cfa-curs-check">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
@@ -896,10 +715,10 @@
                     <label class="cfa-curs-card">
                         <input type="radio" name="curs">
                         <div class="cfa-curs-card-contingut">
-                            <span class="cfa-curs-badge">Llengua Castellana</span>
+                            <span class="cfa-curs-icona">🇪🇸</span>
                             <div class="cfa-curs-info">
-                                <span class="cfa-curs-nom">Estudi de Castellà 1 (A1), 2 (A2) i 3 (B1)</span>
-                                <span class="cfa-curs-descripcio">Certificats A1, A2 i B1 de llengua castellana</span>
+                                <span class="cfa-curs-nom">Castellà</span>
+                                <span class="cfa-curs-descripcio">Cursos de llengua castellana</span>
                             </div>
                             <span class="cfa-curs-check">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
@@ -912,10 +731,10 @@
                     <label class="cfa-curs-card">
                         <input type="radio" name="curs">
                         <div class="cfa-curs-card-contingut">
-                            <span class="cfa-curs-badge">Llengua Anglesa</span>
+                            <span class="cfa-curs-icona">🇬🇧</span>
                             <div class="cfa-curs-info">
-                                <span class="cfa-curs-nom">Estudi d'Anglès A1, A2.1 i A2.2</span>
-                                <span class="cfa-curs-descripcio">Certificats A1, A2.1 i A2.2 de llengua anglesa</span>
+                                <span class="cfa-curs-nom">Anglès</span>
+                                <span class="cfa-curs-descripcio">Cursos d'anglès nivells A1-B2</span>
                             </div>
                             <span class="cfa-curs-check">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
@@ -928,10 +747,10 @@
                     <label class="cfa-curs-card">
                         <input type="radio" name="curs">
                         <div class="cfa-curs-card-contingut">
-                            <span class="cfa-curs-badge">Llengua Francesa</span>
+                            <span class="cfa-curs-icona">🎓</span>
                             <div class="cfa-curs-info">
-                                <span class="cfa-curs-nom">Estudi de Francès A1 i A2.1</span>
-                                <span class="cfa-curs-descripcio">Certificats A1 i A2.1 de llengua francesa</span>
+                                <span class="cfa-curs-nom">Graduat en Educació Secundària (GES)</span>
+                                <span class="cfa-curs-descripcio">Obtén el títol de la ESO</span>
                             </div>
                             <span class="cfa-curs-check">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
@@ -944,10 +763,10 @@
                     <label class="cfa-curs-card">
                         <input type="radio" name="curs">
                         <div class="cfa-curs-card-contingut">
-                            <span class="cfa-curs-badge">Formació Instrumental</span>
+                            <span class="cfa-curs-icona">💻</span>
                             <div class="cfa-curs-info">
-                                <span class="cfa-curs-nom">Educació Bàsica Instrumental</span>
-                                <span class="cfa-curs-descripcio">Competències bàsiques de lectura, escriptura i càlcul</span>
+                                <span class="cfa-curs-nom">Informàtica</span>
+                                <span class="cfa-curs-descripcio">Cursos d'informàtica bàsica i avançada</span>
                             </div>
                             <span class="cfa-curs-check">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
@@ -960,10 +779,10 @@
                     <label class="cfa-curs-card">
                         <input type="radio" name="curs">
                         <div class="cfa-curs-card-contingut">
-                            <span class="cfa-curs-badge">Graduat ESO</span>
+                            <span class="cfa-curs-icona">🇫🇷</span>
                             <div class="cfa-curs-info">
-                                <span class="cfa-curs-nom">Graduat en Educació Secundària</span>
-                                <span class="cfa-curs-descripcio">Obtén el títol oficial de la ESO</span>
+                                <span class="cfa-curs-nom">Francès</span>
+                                <span class="cfa-curs-descripcio">Cursos de francès per a principiants</span>
                             </div>
                             <span class="cfa-curs-check">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
@@ -976,16 +795,15 @@
 
                 <div class="cfa-pas-botons">
                     <button class="cfa-boto cfa-boto-primari cfa-boto-seguent" onclick="showStep(2)">
-                        Següent
-                        <span class="cfa-boto-icona">→</span>
+                        Següent →
                     </button>
                 </div>
             </div>
 
             <!-- PAS 2: Calendari -->
             <div class="cfa-pas-contingut" id="step-2">
-                <h2>Selecciona data i hora</h2>
-                <p class="cfa-pas-descripcio">Tria una data i hora disponible per a la teva cita d'inscripció</p>
+                <h3>Selecciona data i hora</h3>
+                <p class="cfa-pas-descripcio">Tria una data i hora disponible per a la teva cita</p>
 
                 <div class="cfa-calendari-wrapper">
                     <div class="cfa-calendari-header">
@@ -994,13 +812,7 @@
                         <button class="cfa-calendari-nav">→</button>
                     </div>
                     <div class="cfa-calendari-dies-setmana">
-                        <span>Dl</span>
-                        <span>Dt</span>
-                        <span>Dc</span>
-                        <span>Dj</span>
-                        <span>Dv</span>
-                        <span>Ds</span>
-                        <span>Dg</span>
+                        <span>Dl</span><span>Dt</span><span>Dc</span><span>Dj</span><span>Dv</span><span>Ds</span><span>Dg</span>
                     </div>
                     <div class="cfa-calendari-dies">
                         <div class="cfa-dia cfa-dia-buit"></div>
@@ -1042,7 +854,7 @@
                 </div>
 
                 <div class="cfa-franges-wrapper">
-                    <h3>Hores disponibles per al dia 21 de gener</h3>
+                    <h4>Hores disponibles per al dia 21 de gener</h4>
                     <div class="cfa-franges-llista">
                         <div class="cfa-franja">
                             <div class="cfa-franja-hora">09:00</div>
@@ -1072,24 +884,18 @@
                 </div>
 
                 <div class="cfa-pas-botons">
-                    <button class="cfa-boto cfa-boto-secundari" onclick="showStep(1)">
-                        <span class="cfa-boto-icona">←</span>
-                        Anterior
-                    </button>
-                    <button class="cfa-boto cfa-boto-primari cfa-boto-seguent" onclick="showStep(3)">
-                        Següent
-                        <span class="cfa-boto-icona">→</span>
-                    </button>
+                    <button class="cfa-boto cfa-boto-secundari" onclick="showStep(1)">← Anterior</button>
+                    <button class="cfa-boto cfa-boto-primari cfa-boto-seguent" onclick="showStep(3)">Següent →</button>
                 </div>
             </div>
 
             <!-- PAS 3: Dades -->
             <div class="cfa-pas-contingut" id="step-3">
-                <h2>Les teves dades</h2>
+                <h3>Les teves dades</h3>
                 <p class="cfa-pas-descripcio">Omple les teves dades per completar la inscripció</p>
 
                 <div class="cfa-resum-seleccio">
-                    <p><strong>Curs:</strong> Estudi de Català 1 (A1) i Català 2 (A2)</p>
+                    <p><strong>Curs:</strong> Català</p>
                     <p><strong>Data:</strong> Dimecres, 21 de gener de 2026</p>
                     <p><strong>Hora:</strong> 10:00h</p>
                 </div>
@@ -1148,18 +954,18 @@
                         <label>Nivell d'estudis</label>
                         <select>
                             <option value="">-- Selecciona --</option>
-                            <option value="sense_estudis">Sense estudis</option>
-                            <option value="primaria">Estudis primaris</option>
-                            <option value="secundaria">Estudis secundaris (ESO)</option>
-                            <option value="batxillerat">Batxillerat</option>
-                            <option value="fp">Formació Professional</option>
-                            <option value="universitaris">Estudis universitaris</option>
+                            <option>Sense estudis</option>
+                            <option>Estudis primaris</option>
+                            <option>Estudis secundaris (ESO)</option>
+                            <option>Batxillerat</option>
+                            <option>Formació Professional</option>
+                            <option>Estudis universitaris</option>
                         </select>
                     </div>
 
                     <div class="cfa-camp">
                         <label>Observacions</label>
-                        <textarea rows="3" placeholder="Qualsevol informació addicional que vulguis comunicar-nos"></textarea>
+                        <textarea rows="2" placeholder="Qualsevol informació addicional..."></textarea>
                     </div>
 
                     <div class="cfa-camp cfa-camp-checkbox">
@@ -1171,13 +977,8 @@
                 </div>
 
                 <div class="cfa-pas-botons">
-                    <button class="cfa-boto cfa-boto-secundari" onclick="showStep(2)">
-                        <span class="cfa-boto-icona">←</span>
-                        Anterior
-                    </button>
-                    <button class="cfa-boto cfa-boto-primari" onclick="showStep(4)">
-                        Enviar inscripció
-                    </button>
+                    <button class="cfa-boto cfa-boto-secundari" onclick="showStep(2)">← Anterior</button>
+                    <button class="cfa-boto cfa-boto-primari" onclick="showStep(4)">Enviar inscripció</button>
                 </div>
             </div>
 
@@ -1189,58 +990,38 @@
                         <polyline points="16 8 10 14 8 12"></polyline>
                     </svg>
                 </div>
-                <h2>Inscripció enviada!</h2>
-                <p>Hem rebut la teva sol·licitud d'inscripció correctament.</p>
-                <p>Rebràs un correu electrònic amb la confirmació. El centre es posarà en contacte amb tu per confirmar la cita.</p>
+                <h3>Inscripció enviada!</h3>
+                <p>Hem rebut la teva sol·licitud correctament.</p>
+                <p>El centre es posarà en contacte amb tu per confirmar la cita.</p>
                 <div class="cfa-exit-detalls">
-                    <p><strong>Curs:</strong> Estudi de Català 1 (A1) i Català 2 (A2)</p>
-                    <p><strong>Data:</strong> Dimecres, 21 de gener de 2026</p>
+                    <p><strong>Curs:</strong> Català</p>
+                    <p><strong>Data:</strong> 21/01/2026</p>
                     <p><strong>Hora:</strong> 10:00h</p>
-                    <p><strong>Nom:</strong> Nom Cognoms</p>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="site-footer">
-        <p>CFA La Garrotxa - Centre de Formació d'Adults</p>
-        <p>Aquesta és una preview del formulari d'inscripcions</p>
-    </footer>
-
     <script>
         function showStep(step) {
-            // Ocultar tots els passos
             document.querySelectorAll('.cfa-pas-contingut').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.preview-nav button').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.cfa-pas').forEach(el => {
-                el.classList.remove('cfa-pas-actiu', 'cfa-pas-completat');
-            });
+            document.querySelectorAll('.cfa-pas').forEach(el => el.classList.remove('cfa-pas-actiu', 'cfa-pas-completat'));
             document.querySelectorAll('.cfa-pas-separador').forEach(el => el.classList.remove('completed'));
 
-            // Mostrar el pas seleccionat
             document.getElementById('step-' + step).classList.add('active');
             document.querySelectorAll('.preview-nav button')[step - 1].classList.add('active');
 
-            // Actualitzar indicadors
             for (let i = 1; i <= 3; i++) {
                 const indicator = document.getElementById('indicator-' + i);
-                if (i < step) {
-                    indicator.classList.add('cfa-pas-completat');
-                } else if (i === step && step <= 3) {
-                    indicator.classList.add('cfa-pas-actiu');
-                }
+                if (i < step) indicator.classList.add('cfa-pas-completat');
+                else if (i === step && step <= 3) indicator.classList.add('cfa-pas-actiu');
             }
 
-            // Actualitzar separadors
             if (step > 1) document.getElementById('sep-1').classList.add('completed');
             if (step > 2) document.getElementById('sep-2').classList.add('completed');
-
-            // Si és el pas 4, tots completats
             if (step === 4) {
-                for (let i = 1; i <= 3; i++) {
-                    document.getElementById('indicator-' + i).classList.add('cfa-pas-completat');
-                }
+                for (let i = 1; i <= 3; i++) document.getElementById('indicator-' + i).classList.add('cfa-pas-completat');
                 document.getElementById('sep-1').classList.add('completed');
                 document.getElementById('sep-2').classList.add('completed');
             }
