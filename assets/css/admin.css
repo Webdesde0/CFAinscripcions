@@ -1,0 +1,100 @@
+/**
+ * CFA Inscripcions - Estils admin
+ */
+
+/* Badges d'estat */
+.cfa-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.cfa-badge-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.cfa-badge-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.cfa-badge-error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.cfa-badge-secondary {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+/* Formularis admin */
+.cfa-admin-form {
+    max-width: 800px;
+}
+
+/* Filtres */
+.cfa-filtres-form {
+    margin-top: 15px;
+}
+
+.cfa-filtres-form .search-box {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.cfa-filtres-form select {
+    min-width: 150px;
+}
+
+.cfa-filtres-form input[type="search"] {
+    min-width: 250px;
+}
+
+/* Taules */
+.column-nom { width: 20%; }
+.column-curs { width: 15%; }
+.column-data { width: 12%; }
+.column-hora { width: 8%; }
+.column-contacte { width: 20%; }
+.column-estat { width: 10%; }
+.column-accions { width: 15%; }
+
+/* Metabox cursos */
+#cfa_curs_calendari .inside select {
+    width: 100%;
+}
+
+/* Pàgina horaris */
+.cfa-afegir-horari-row {
+    background: #f9f9f9;
+}
+
+.cfa-afegir-horari-row select,
+.cfa-afegir-horari-row input[type="time"] {
+    width: auto;
+}
+
+/* Excepcions */
+.cfa-excepcio-hores {
+    transition: all 0.3s ease;
+}
+
+/* Responsive admin */
+@media screen and (max-width: 782px) {
+    .cfa-filtres-form .search-box {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .cfa-filtres-form select,
+    .cfa-filtres-form input[type="search"] {
+        width: 100%;
+        min-width: auto;
+    }
+}
