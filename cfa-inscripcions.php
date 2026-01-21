@@ -166,7 +166,10 @@ class CFA_Inscripcions {
      */
     public function enqueue_admin_assets($hook) {
         // Només a les pàgines del plugin
-        if (strpos($hook, 'cfa-inscripcions') === false && get_post_type() !== 'cfa_curs') {
+        if (strpos($hook, 'cfa-inscripcions') === false &&
+            strpos($hook, 'cfa-calendaris') === false &&
+            strpos($hook, 'cfa-configuracio') === false &&
+            get_post_type() !== 'cfa_curs') {
             return;
         }
 
@@ -184,6 +187,11 @@ class CFA_Inscripcions {
             CFA_INSCRIPCIONS_VERSION,
             true
         );
+
+        wp_localize_script('cfa-inscripcions-admin', 'cfaAdmin', array(
+            'ajaxurl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('cfa_inscripcions_nonce'),
+        ));
     }
 }
 
