@@ -28,6 +28,7 @@ class CFA_Admin {
         add_action('wp_ajax_cfa_confirmar_inscripcio', array($this, 'ajax_confirmar_inscripcio'));
         add_action('wp_ajax_cfa_cancel_lar_inscripcio', array($this, 'ajax_cancel_lar_inscripcio'));
         add_action('wp_ajax_cfa_eliminar_inscripcio', array($this, 'ajax_eliminar_inscripcio'));
+        add_action('wp_ajax_cfa_editar_inscripcio', array($this, 'ajax_editar_inscripcio'));
         add_action('wp_ajax_cfa_guardar_calendari', array($this, 'ajax_guardar_calendari'));
         add_action('wp_ajax_cfa_eliminar_calendari', array($this, 'ajax_eliminar_calendari'));
         add_action('wp_ajax_cfa_guardar_horaris', array($this, 'ajax_guardar_horaris'));
@@ -104,6 +105,9 @@ class CFA_Admin {
         switch ($action) {
             case 'veure':
                 $this->render_inscripcio_detall();
+                break;
+            case 'editar':
+                $this->render_inscripcio_editar();
                 break;
             default:
                 $this->render_inscripcions_llistat();
@@ -259,6 +263,10 @@ class CFA_Admin {
                                     <a href="<?php echo admin_url('admin.php?page=cfa-inscripcions&action=veure&id=' . $inscripcio->id); ?>"
                                        class="button button-small">
                                         <?php _e('Veure', 'cfa-inscripcions'); ?>
+                                    </a>
+                                    <a href="<?php echo admin_url('admin.php?page=cfa-inscripcions&action=editar&id=' . $inscripcio->id); ?>"
+                                       class="button button-small">
+                                        <?php _e('Editar', 'cfa-inscripcions'); ?>
                                     </a>
                                     <?php if ($estat_actual === 'pendent') : ?>
                                         <button type="button" class="button button-small button-primary cfa-btn-confirmar"
@@ -439,6 +447,12 @@ class CFA_Admin {
                                         </button>
                                     </p>
                                 <?php endif; ?>
+                                <p>
+                                    <a href="<?php echo admin_url('admin.php?page=cfa-inscripcions&action=editar&id=' . $inscripcio->id); ?>"
+                                       class="button button-large" style="width:100%; text-align:center;">
+                                        <?php _e('Editar inscripció', 'cfa-inscripcions'); ?>
+                                    </a>
+                                </p>
                                 <?php if ($estat_actual !== 'cancel_lada') : ?>
                                     <p>
                                         <button type="button" class="button cfa-btn-cancel-lar"
@@ -447,18 +461,178 @@ class CFA_Admin {
                                         </button>
                                     </p>
                                 <?php endif; ?>
-                                <hr>
-                                <p>
-                                    <button type="button" class="button button-link-delete cfa-btn-eliminar"
-                                            data-id="<?php echo esc_attr($inscripcio->id); ?>">
-                                        <?php _e('Eliminar inscripció', 'cfa-inscripcions'); ?>
-                                    </button>
-                                </p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Renderitzar formulari d'edició d'inscripció
+     */
+    private function render_inscripcio_editar() {
+        $id = isset($_GET['id']) ? absint($_GET['id']) : 0;
+        $inscripcio = CFA_Inscripcions_DB::obtenir_inscripcio($id);
+
+        if (!$inscripcio) {
+            echo '<div class="wrap"><div class="notice notice-error"><p>' .
+                 __('Inscripció no trobada.', 'cfa-inscripcions') .
+                 '</p></div></div>';
+            return;
+        }
+
+        // Obtenir cursos per al selector
+        $cursos = CFA_Cursos::obtenir_cursos_actius();
+        $curs_actual = CFA_Cursos::obtenir_curs($inscripcio->curs_id);
+        $nom_curs = $curs_actual ? $curs_actual['nom'] : __('Curs eliminat', 'cfa-inscripcions');
+        $estat_actual = !empty($inscripcio->estat) ? $inscripcio->estat : 'pendent';
+        ?>
+        <div class="wrap">
+            <h1>
+                <a href="<?php echo admin_url('admin.php?page=cfa-inscripcions&action=veure&id=' . $id); ?>" class="page-title-action">
+                    ← <?php _e('Tornar al detall', 'cfa-inscripcions'); ?>
+                </a>
+                <?php _e('Editar inscripció', 'cfa-inscripcions'); ?>
+            </h1>
+
+            <form id="cfa-editar-inscripcio-form" method="post">
+                <input type="hidden" name="inscripcio_id" value="<?php echo esc_attr($id); ?>">
+                <?php wp_nonce_field('cfa_editar_inscripcio_nonce', 'nonce'); ?>
+
+                <div id="poststuff">
+                    <div id="post-body" class="metabox-holder columns-2">
+                        <!-- Columna principal -->
+                        <div id="post-body-content">
+                            <div class="postbox">
+                                <h2 class="hndle"><?php _e('Dades de l\'alumne', 'cfa-inscripcions'); ?></h2>
+                                <div class="inside">
+                                    <table class="form-table">
+                                        <tr>
+                                            <th><label for="nom"><?php _e('Nom', 'cfa-inscripcions'); ?></label></th>
+                                            <td><input type="text" name="nom" id="nom" class="regular-text"
+                                                       value="<?php echo esc_attr($inscripcio->nom); ?>" required></td>
+                                        </tr>
+                                        <tr>
+                                            <th><label for="cognoms"><?php _e('Cognoms', 'cfa-inscripcions'); ?></label></th>
+                                            <td><input type="text" name="cognoms" id="cognoms" class="regular-text"
+                                                       value="<?php echo esc_attr($inscripcio->cognoms); ?>" required></td>
+                                        </tr>
+                                        <tr>
+                                            <th><label for="dni"><?php _e('DNI/NIE', 'cfa-inscripcions'); ?></label></th>
+                                            <td><input type="text" name="dni" id="dni" class="regular-text"
+                                                       value="<?php echo esc_attr($inscripcio->dni); ?>" required></td>
+                                        </tr>
+                                        <tr>
+                                            <th><label for="data_naixement"><?php _e('Data de naixement', 'cfa-inscripcions'); ?></label></th>
+                                            <td><input type="date" name="data_naixement" id="data_naixement"
+                                                       value="<?php echo esc_attr($inscripcio->data_naixement); ?>"></td>
+                                        </tr>
+                                        <tr>
+                                            <th><label for="telefon"><?php _e('Telèfon', 'cfa-inscripcions'); ?></label></th>
+                                            <td><input type="tel" name="telefon" id="telefon" class="regular-text"
+                                                       value="<?php echo esc_attr($inscripcio->telefon); ?>" required></td>
+                                        </tr>
+                                        <tr>
+                                            <th><label for="email"><?php _e('Email', 'cfa-inscripcions'); ?></label></th>
+                                            <td><input type="email" name="email" id="email" class="regular-text"
+                                                       value="<?php echo esc_attr($inscripcio->email); ?>" required></td>
+                                        </tr>
+                                        <tr>
+                                            <th><label for="adreca"><?php _e('Adreça', 'cfa-inscripcions'); ?></label></th>
+                                            <td><input type="text" name="adreca" id="adreca" class="large-text"
+                                                       value="<?php echo esc_attr($inscripcio->adreca); ?>"></td>
+                                        </tr>
+                                        <tr>
+                                            <th><label for="poblacio"><?php _e('Població', 'cfa-inscripcions'); ?></label></th>
+                                            <td><input type="text" name="poblacio" id="poblacio" class="regular-text"
+                                                       value="<?php echo esc_attr($inscripcio->poblacio); ?>"></td>
+                                        </tr>
+                                        <tr>
+                                            <th><label for="codi_postal"><?php _e('Codi postal', 'cfa-inscripcions'); ?></label></th>
+                                            <td><input type="text" name="codi_postal" id="codi_postal" class="small-text"
+                                                       value="<?php echo esc_attr($inscripcio->codi_postal); ?>"></td>
+                                        </tr>
+                                        <tr>
+                                            <th><label for="nivell_estudis"><?php _e('Nivell d\'estudis', 'cfa-inscripcions'); ?></label></th>
+                                            <td><input type="text" name="nivell_estudis" id="nivell_estudis" class="regular-text"
+                                                       value="<?php echo esc_attr($inscripcio->nivell_estudis); ?>"></td>
+                                        </tr>
+                                        <tr>
+                                            <th><label for="observacions"><?php _e('Observacions', 'cfa-inscripcions'); ?></label></th>
+                                            <td><textarea name="observacions" id="observacions" rows="4" class="large-text"><?php
+                                                echo esc_textarea($inscripcio->observacions); ?></textarea></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Barra lateral -->
+                        <div id="postbox-container-1" class="postbox-container">
+                            <div class="postbox">
+                                <h2 class="hndle"><?php _e('Informació de la cita', 'cfa-inscripcions'); ?></h2>
+                                <div class="inside">
+                                    <p>
+                                        <label for="curs_id"><strong><?php _e('Curs:', 'cfa-inscripcions'); ?></strong></label><br>
+                                        <select name="curs_id" id="curs_id" style="width:100%;">
+                                            <?php foreach ($cursos as $curs) : ?>
+                                                <option value="<?php echo esc_attr($curs['id']); ?>"
+                                                    <?php selected($inscripcio->curs_id, $curs['id']); ?>>
+                                                    <?php echo esc_html($curs['nom']); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </p>
+                                    <p>
+                                        <label for="data_cita"><strong><?php _e('Data:', 'cfa-inscripcions'); ?></strong></label><br>
+                                        <input type="date" name="data_cita" id="data_cita"
+                                               value="<?php echo esc_attr($inscripcio->data_cita); ?>" style="width:100%;">
+                                    </p>
+                                    <p>
+                                        <label for="hora_cita"><strong><?php _e('Hora:', 'cfa-inscripcions'); ?></strong></label><br>
+                                        <input type="time" name="hora_cita" id="hora_cita"
+                                               value="<?php echo esc_attr(date('H:i', strtotime($inscripcio->hora_cita))); ?>" style="width:100%;">
+                                    </p>
+                                    <p>
+                                        <label for="estat"><strong><?php _e('Estat:', 'cfa-inscripcions'); ?></strong></label><br>
+                                        <select name="estat" id="estat" style="width:100%;">
+                                            <option value="pendent" <?php selected($estat_actual, 'pendent'); ?>>
+                                                <?php _e('Pendent', 'cfa-inscripcions'); ?>
+                                            </option>
+                                            <option value="confirmada" <?php selected($estat_actual, 'confirmada'); ?>>
+                                                <?php _e('Confirmada', 'cfa-inscripcions'); ?>
+                                            </option>
+                                            <option value="cancel_lada" <?php selected($estat_actual, 'cancel_lada'); ?>>
+                                                <?php _e('Cancel·lada', 'cfa-inscripcions'); ?>
+                                            </option>
+                                        </select>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="postbox">
+                                <h2 class="hndle"><?php _e('Guardar', 'cfa-inscripcions'); ?></h2>
+                                <div class="inside">
+                                    <p>
+                                        <button type="submit" class="button button-primary button-large" style="width:100%;">
+                                            <?php _e('Guardar canvis', 'cfa-inscripcions'); ?>
+                                        </button>
+                                    </p>
+                                    <p>
+                                        <a href="<?php echo admin_url('admin.php?page=cfa-inscripcions&action=veure&id=' . $id); ?>"
+                                           class="button" style="width:100%; text-align:center;">
+                                            <?php _e('Cancel·lar', 'cfa-inscripcions'); ?>
+                                        </a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
         </div>
         <?php
     }
@@ -1091,6 +1265,58 @@ class CFA_Admin {
             wp_send_json_success(array('message' => __('Inscripció eliminada.', 'cfa-inscripcions')));
         } else {
             wp_send_json_error(array('message' => __('Error en eliminar la inscripció.', 'cfa-inscripcions')));
+        }
+    }
+
+    /**
+     * AJAX: Editar inscripció
+     */
+    public function ajax_editar_inscripcio() {
+        check_ajax_referer('cfa_editar_inscripcio_nonce', 'nonce');
+
+        if (!current_user_can('cfa_gestionar_inscripcions')) {
+            wp_send_json_error(array('message' => __('No tens permisos.', 'cfa-inscripcions')));
+        }
+
+        $id = isset($_POST['inscripcio_id']) ? absint($_POST['inscripcio_id']) : 0;
+
+        if (!$id) {
+            wp_send_json_error(array('message' => __('ID d\'inscripció invàlid.', 'cfa-inscripcions')));
+        }
+
+        // Obtenir curs per actualitzar calendari_id si cal
+        $curs_id = isset($_POST['curs_id']) ? absint($_POST['curs_id']) : 0;
+        $curs = CFA_Cursos::obtenir_curs($curs_id);
+        $calendari_id = $curs ? $curs['calendari_id'] : 0;
+
+        $dades = array(
+            'curs_id' => $curs_id,
+            'calendari_id' => $calendari_id,
+            'data_cita' => sanitize_text_field($_POST['data_cita'] ?? ''),
+            'hora_cita' => sanitize_text_field($_POST['hora_cita'] ?? ''),
+            'nom' => sanitize_text_field($_POST['nom'] ?? ''),
+            'cognoms' => sanitize_text_field($_POST['cognoms'] ?? ''),
+            'dni' => strtoupper(sanitize_text_field($_POST['dni'] ?? '')),
+            'data_naixement' => sanitize_text_field($_POST['data_naixement'] ?? ''),
+            'telefon' => sanitize_text_field($_POST['telefon'] ?? ''),
+            'email' => sanitize_email($_POST['email'] ?? ''),
+            'adreca' => sanitize_text_field($_POST['adreca'] ?? ''),
+            'poblacio' => sanitize_text_field($_POST['poblacio'] ?? ''),
+            'codi_postal' => sanitize_text_field($_POST['codi_postal'] ?? ''),
+            'nivell_estudis' => sanitize_text_field($_POST['nivell_estudis'] ?? ''),
+            'observacions' => sanitize_textarea_field($_POST['observacions'] ?? ''),
+            'estat' => sanitize_text_field($_POST['estat'] ?? 'pendent'),
+        );
+
+        $result = CFA_Inscripcions_DB::actualitzar_inscripcio($id, $dades);
+
+        if ($result !== false) {
+            wp_send_json_success(array(
+                'message' => __('Inscripció actualitzada correctament.', 'cfa-inscripcions'),
+                'redirect' => admin_url('admin.php?page=cfa-inscripcions&action=veure&id=' . $id),
+            ));
+        } else {
+            wp_send_json_error(array('message' => __('Error en actualitzar la inscripció.', 'cfa-inscripcions')));
         }
     }
 

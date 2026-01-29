@@ -278,8 +278,13 @@ class CFA_Inscripcions_DB {
         $values = array();
 
         if (!empty($args['estat'])) {
-            $where[] = 'estat = %s';
-            $values[] = $args['estat'];
+            // Tractar NULL o buit com 'pendent'
+            if ($args['estat'] === 'pendent') {
+                $where[] = "(estat = 'pendent' OR estat IS NULL OR estat = '')";
+            } else {
+                $where[] = 'estat = %s';
+                $values[] = $args['estat'];
+            }
         }
 
         if (!empty($args['curs_id'])) {
@@ -347,8 +352,13 @@ class CFA_Inscripcions_DB {
         $values = array();
 
         if (!empty($args['estat'])) {
-            $where[] = 'estat = %s';
-            $values[] = $args['estat'];
+            // Tractar NULL o buit com 'pendent'
+            if ($args['estat'] === 'pendent') {
+                $where[] = "(estat = 'pendent' OR estat IS NULL OR estat = '')";
+            } else {
+                $where[] = 'estat = %s';
+                $values[] = $args['estat'];
+            }
         }
 
         if (!empty($args['curs_id'])) {
@@ -386,6 +396,53 @@ class CFA_Inscripcions_DB {
             array('estat' => $nou_estat),
             array('id' => $id),
             array('%s'),
+            array('%d')
+        );
+    }
+
+    /**
+     * Actualitzar inscripció completa
+     */
+    public static function actualitzar_inscripcio($id, $dades) {
+        global $wpdb;
+
+        // Assegurar que la taula està definida
+        if (empty(self::$table_inscripcions)) {
+            self::get_instance();
+        }
+
+        // Camps permesos per actualitzar
+        $camps_permesos = array(
+            'curs_id', 'calendari_id', 'data_cita', 'hora_cita',
+            'nom', 'cognoms', 'dni', 'data_naixement', 'telefon', 'email',
+            'adreca', 'poblacio', 'codi_postal', 'nivell_estudis', 'observacions', 'estat'
+        );
+
+        // Filtrar només camps permesos
+        $dades_filtrades = array();
+        foreach ($dades as $key => $value) {
+            if (in_array($key, $camps_permesos)) {
+                $dades_filtrades[$key] = $value;
+            }
+        }
+
+        if (empty($dades_filtrades)) {
+            return false;
+        }
+
+        // Validar estat si s'ha proporcionat
+        if (isset($dades_filtrades['estat'])) {
+            $estats_valids = array('pendent', 'confirmada', 'cancel_lada');
+            if (!in_array($dades_filtrades['estat'], $estats_valids)) {
+                $dades_filtrades['estat'] = 'pendent';
+            }
+        }
+
+        return $wpdb->update(
+            self::$table_inscripcions,
+            $dades_filtrades,
+            array('id' => $id),
+            null,
             array('%d')
         );
     }

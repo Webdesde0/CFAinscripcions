@@ -151,6 +151,17 @@
                 });
             }
         });
+
+        // Formulari editar inscripció
+        $('#cfa-editar-inscripcio-form').on('submit', function(e) {
+            e.preventDefault();
+            const formData = $(this).serialize();
+            ajaxAction('cfa_editar_inscripcio', formData, function(response) {
+                if (response.success && response.data.redirect) {
+                    window.location.href = response.data.redirect;
+                }
+            });
+        });
     }
 
     /**
