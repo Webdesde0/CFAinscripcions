@@ -39,43 +39,43 @@ class CFA_Admin {
      * Afegir menú d'administració
      */
     public function add_admin_menu() {
-        // Menú principal
+        // Menú principal - visible per professors i admins
         add_menu_page(
             __('CFA Inscripcions', 'cfa-inscripcions'),
             __('Inscripcions', 'cfa-inscripcions'),
-            'manage_options',
+            'cfa_veure_inscripcions',
             'cfa-inscripcions',
             array($this, 'render_page_inscripcions'),
             'dashicons-clipboard',
             30
         );
 
-        // Submenú inscripcions
+        // Submenú inscripcions - professors i admins
         add_submenu_page(
             'cfa-inscripcions',
             __('Inscripcions', 'cfa-inscripcions'),
             __('Inscripcions', 'cfa-inscripcions'),
-            'manage_options',
+            'cfa_veure_inscripcions',
             'cfa-inscripcions',
             array($this, 'render_page_inscripcions')
         );
 
-        // Submenú calendaris
+        // Submenú calendaris - només admins
         add_submenu_page(
             'cfa-inscripcions',
             __('Calendaris', 'cfa-inscripcions'),
             __('Calendaris', 'cfa-inscripcions'),
-            'manage_options',
+            'cfa_gestionar_calendaris',
             'cfa-calendaris',
             array($this, 'render_page_calendaris')
         );
 
-        // Submenú configuració
+        // Submenú configuració - només admins
         add_submenu_page(
             'cfa-inscripcions',
             __('Configuració', 'cfa-inscripcions'),
             __('Configuració', 'cfa-inscripcions'),
-            'manage_options',
+            'cfa_gestionar_configuracio',
             'cfa-configuracio',
             array($this, 'render_page_configuracio')
         );
@@ -251,18 +251,25 @@ class CFA_Admin {
                                         <?php echo esc_html($inscripcio->telefon); ?>
                                     </a>
                                 </td>
+                                <?php $estat_actual = !empty($inscripcio->estat) ? $inscripcio->estat : 'pendent'; ?>
                                 <td class="column-estat">
-                                    <?php $this->render_estat_badge($inscripcio->estat); ?>
+                                    <?php $this->render_estat_badge($estat_actual); ?>
                                 </td>
                                 <td class="column-accions">
                                     <a href="<?php echo admin_url('admin.php?page=cfa-inscripcions&action=veure&id=' . $inscripcio->id); ?>"
                                        class="button button-small">
                                         <?php _e('Veure', 'cfa-inscripcions'); ?>
                                     </a>
-                                    <?php if ($inscripcio->estat === 'pendent') : ?>
+                                    <?php if ($estat_actual === 'pendent') : ?>
                                         <button type="button" class="button button-small button-primary cfa-btn-confirmar"
                                                 data-id="<?php echo esc_attr($inscripcio->id); ?>">
                                             <?php _e('Confirmar', 'cfa-inscripcions'); ?>
+                                        </button>
+                                    <?php endif; ?>
+                                    <?php if ($estat_actual !== 'cancel_lada') : ?>
+                                        <button type="button" class="button button-small cfa-btn-cancel-lar"
+                                                data-id="<?php echo esc_attr($inscripcio->id); ?>">
+                                            <?php _e('Cancel·lar', 'cfa-inscripcions'); ?>
                                         </button>
                                     <?php endif; ?>
                                 </td>
@@ -396,12 +403,13 @@ class CFA_Admin {
                     </div>
 
                     <!-- Barra lateral -->
+                    <?php $estat_actual = !empty($inscripcio->estat) ? $inscripcio->estat : 'pendent'; ?>
                     <div id="postbox-container-1" class="postbox-container">
                         <div class="postbox">
                             <h2 class="hndle"><?php _e('Informació de la cita', 'cfa-inscripcions'); ?></h2>
                             <div class="inside">
                                 <p><strong><?php _e('Estat:', 'cfa-inscripcions'); ?></strong><br>
-                                    <?php $this->render_estat_badge($inscripcio->estat); ?>
+                                    <?php $this->render_estat_badge($estat_actual); ?>
                                 </p>
                                 <p><strong><?php _e('Curs:', 'cfa-inscripcions'); ?></strong><br>
                                     <?php echo esc_html($nom_curs); ?>
@@ -423,24 +431,19 @@ class CFA_Admin {
                         <div class="postbox">
                             <h2 class="hndle"><?php _e('Accions', 'cfa-inscripcions'); ?></h2>
                             <div class="inside">
-                                <?php if ($inscripcio->estat === 'pendent') : ?>
+                                <?php if ($estat_actual === 'pendent') : ?>
                                     <p>
                                         <button type="button" class="button button-primary button-large cfa-btn-confirmar"
                                                 data-id="<?php echo esc_attr($inscripcio->id); ?>" style="width:100%;">
                                             <?php _e('Confirmar cita', 'cfa-inscripcions'); ?>
                                         </button>
                                     </p>
+                                <?php endif; ?>
+                                <?php if ($estat_actual !== 'cancel_lada') : ?>
                                     <p>
                                         <button type="button" class="button cfa-btn-cancel-lar"
                                                 data-id="<?php echo esc_attr($inscripcio->id); ?>" style="width:100%;">
                                             <?php _e('Cancel·lar inscripció', 'cfa-inscripcions'); ?>
-                                        </button>
-                                    </p>
-                                <?php elseif ($inscripcio->estat === 'confirmada') : ?>
-                                    <p>
-                                        <button type="button" class="button cfa-btn-cancel-lar"
-                                                data-id="<?php echo esc_attr($inscripcio->id); ?>" style="width:100%;">
-                                            <?php _e('Cancel·lar cita', 'cfa-inscripcions'); ?>
                                         </button>
                                     </p>
                                 <?php endif; ?>
@@ -1010,7 +1013,7 @@ class CFA_Admin {
     public function ajax_confirmar_inscripcio() {
         check_ajax_referer('cfa_inscripcions_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can('cfa_gestionar_inscripcions')) {
             wp_send_json_error(array('message' => __('No tens permisos.', 'cfa-inscripcions')));
         }
 
@@ -1041,7 +1044,7 @@ class CFA_Admin {
     public function ajax_cancel_lar_inscripcio() {
         check_ajax_referer('cfa_inscripcions_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can('cfa_gestionar_inscripcions')) {
             wp_send_json_error(array('message' => __('No tens permisos.', 'cfa-inscripcions')));
         }
 
@@ -1076,7 +1079,7 @@ class CFA_Admin {
     public function ajax_eliminar_inscripcio() {
         check_ajax_referer('cfa_inscripcions_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can('cfa_gestionar_inscripcions')) {
             wp_send_json_error(array('message' => __('No tens permisos.', 'cfa-inscripcions')));
         }
 
@@ -1097,7 +1100,7 @@ class CFA_Admin {
     public function ajax_guardar_calendari() {
         check_ajax_referer('cfa_calendari_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can('cfa_gestionar_calendaris')) {
             wp_send_json_error(array('message' => __('No tens permisos.', 'cfa-inscripcions')));
         }
 
@@ -1141,7 +1144,7 @@ class CFA_Admin {
     public function ajax_eliminar_calendari() {
         check_ajax_referer('cfa_calendari_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can('cfa_gestionar_calendaris')) {
             wp_send_json_error(array('message' => __('No tens permisos.', 'cfa-inscripcions')));
         }
 
@@ -1165,7 +1168,7 @@ class CFA_Admin {
     public function ajax_guardar_horaris() {
         check_ajax_referer('cfa_horaris_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can('cfa_gestionar_calendaris')) {
             wp_send_json_error(array('message' => __('No tens permisos.', 'cfa-inscripcions')));
         }
 
@@ -1210,7 +1213,7 @@ class CFA_Admin {
     public function ajax_afegir_excepcio() {
         check_ajax_referer('cfa_excepcio_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can('cfa_gestionar_calendaris')) {
             wp_send_json_error(array('message' => __('No tens permisos.', 'cfa-inscripcions')));
         }
 
@@ -1242,7 +1245,7 @@ class CFA_Admin {
     public function ajax_eliminar_excepcio() {
         check_ajax_referer('cfa_excepcio_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can('cfa_gestionar_calendaris')) {
             wp_send_json_error(array('message' => __('No tens permisos.', 'cfa-inscripcions')));
         }
 
