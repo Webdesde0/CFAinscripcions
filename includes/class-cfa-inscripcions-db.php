@@ -179,6 +179,12 @@ class CFA_Inscripcions_DB {
     public static function crear_inscripcio($dades) {
         global $wpdb;
 
+        // Assegurar que la taula està definida
+        if (empty(self::$table_inscripcions)) {
+            self::get_instance();
+        }
+
+        // Valors per defecte
         $defaults = array(
             'estat' => 'pendent',
             'ip_usuari' => self::get_client_ip(),
@@ -186,13 +192,44 @@ class CFA_Inscripcions_DB {
 
         $dades = wp_parse_args($dades, $defaults);
 
+        // Forçar estat a pendent si no és vàlid
+        if (!in_array($dades['estat'], array('pendent', 'confirmada', 'cancel_lada'))) {
+            $dades['estat'] = 'pendent';
+        }
+
+        // Definir formats per cada camp
+        $formats = array(
+            'curs_id' => '%d',
+            'calendari_id' => '%d',
+            'data_cita' => '%s',
+            'hora_cita' => '%s',
+            'nom' => '%s',
+            'cognoms' => '%s',
+            'dni' => '%s',
+            'data_naixement' => '%s',
+            'telefon' => '%s',
+            'email' => '%s',
+            'adreca' => '%s',
+            'poblacio' => '%s',
+            'codi_postal' => '%s',
+            'nivell_estudis' => '%s',
+            'observacions' => '%s',
+            'estat' => '%s',
+            'ip_usuari' => '%s',
+        );
+
+        // Obtenir els formats només per les claus que existeixen a $dades
+        $format_array = array();
+        foreach ($dades as $key => $value) {
+            if (isset($formats[$key])) {
+                $format_array[] = $formats[$key];
+            }
+        }
+
         $result = $wpdb->insert(
             self::$table_inscripcions,
             $dades,
-            array(
-                '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s',
-                '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'
-            )
+            $format_array
         );
 
         if ($result) {

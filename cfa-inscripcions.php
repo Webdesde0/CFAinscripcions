@@ -95,6 +95,10 @@ class CFA_Inscripcions {
 
         // Registrar CPT per flush rewrite rules
         CFA_Cursos::register_post_type();
+
+        // Crear rol de Professor CFA
+        $this->create_professor_role();
+
         flush_rewrite_rules();
     }
 
@@ -103,6 +107,31 @@ class CFA_Inscripcions {
      */
     public function deactivate() {
         flush_rewrite_rules();
+    }
+
+    /**
+     * Crear rol de Professor CFA amb permisos limitats
+     */
+    private function create_professor_role() {
+        // Eliminar rol existent si existeix (per actualitzar capacitats)
+        remove_role('cfa_professor');
+
+        // Crear rol amb capacitats limitades
+        add_role('cfa_professor', __('Professor CFA', 'cfa-inscripcions'), array(
+            'read' => true,
+            // Capacitats específiques del plugin
+            'cfa_veure_inscripcions' => true,
+            'cfa_gestionar_inscripcions' => true,
+        ));
+
+        // Afegir capacitats a l'administrador també
+        $admin = get_role('administrator');
+        if ($admin) {
+            $admin->add_cap('cfa_veure_inscripcions');
+            $admin->add_cap('cfa_gestionar_inscripcions');
+            $admin->add_cap('cfa_gestionar_calendaris');
+            $admin->add_cap('cfa_gestionar_configuracio');
+        }
     }
 
     /**
