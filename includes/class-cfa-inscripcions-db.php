@@ -259,6 +259,11 @@ class CFA_Inscripcions_DB {
     public static function obtenir_inscripcions($args = array()) {
         global $wpdb;
 
+        // Assegurar que la taula està definida
+        if (empty(self::$table_inscripcions)) {
+            self::get_instance();
+        }
+
         $defaults = array(
             'estat' => '',
             'curs_id' => 0,
@@ -339,6 +344,11 @@ class CFA_Inscripcions_DB {
      */
     public static function comptar_inscripcions($args = array()) {
         global $wpdb;
+
+        // Assegurar que la taula està definida
+        if (empty(self::$table_inscripcions)) {
+            self::get_instance();
+        }
 
         $defaults = array(
             'estat' => '',
