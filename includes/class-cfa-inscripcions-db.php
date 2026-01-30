@@ -624,18 +624,27 @@ class CFA_Inscripcions_DB {
             self::get_instance();
         }
 
-        $defaults = array(
-            'ordre' => 0,
-            'actiu' => 1,
+        // Preparar dades amb valors per defecte
+        $insert_data = array(
+            'nom' => isset($dades['nom']) ? $dades['nom'] : '',
+            'descripcio' => isset($dades['descripcio']) ? $dades['descripcio'] : '',
+            'calendari_id' => isset($dades['calendari_id']) ? $dades['calendari_id'] : null,
+            'professor_id' => isset($dades['professor_id']) ? $dades['professor_id'] : null,
+            'ordre' => isset($dades['ordre']) ? intval($dades['ordre']) : 0,
+            'actiu' => isset($dades['actiu']) ? intval($dades['actiu']) : 1,
         );
 
-        $dades = wp_parse_args($dades, $defaults);
-
-        $result = $wpdb->insert(
-            self::$table_cursos,
-            $dades,
-            array('%s', '%s', '%d', '%d', '%d', '%d')
+        // Format per cada camp
+        $format = array(
+            '%s',  // nom
+            '%s',  // descripcio
+            '%d',  // calendari_id
+            '%d',  // professor_id
+            '%d',  // ordre
+            '%d',  // actiu
         );
+
+        $result = $wpdb->insert(self::$table_cursos, $insert_data, $format);
 
         if ($result) {
             return $wpdb->insert_id;
