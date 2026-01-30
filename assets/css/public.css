@@ -470,17 +470,24 @@
     border: none;
 }
 
-.cfa-boto-primari {
-    background: var(--cfa-primary);
-    color: var(--cfa-white);
+.cfa-inscripcio-wrapper .cfa-boto-primari,
+.cfa-boto.cfa-boto-primari {
+    background: #56C271 !important;
+    background-color: #56C271 !important;
+    color: #fff !important;
+    border: none !important;
+    border-color: #56C271 !important;
 }
 
-.cfa-boto-primari:hover {
-    background: var(--cfa-primary-dark);
+.cfa-inscripcio-wrapper .cfa-boto-primari:hover,
+.cfa-boto.cfa-boto-primari:hover {
+    background: #45a55e !important;
+    background-color: #45a55e !important;
 }
 
-.cfa-boto-primari:disabled {
-    background: #ccc;
+.cfa-inscripcio-wrapper .cfa-boto-primari:disabled,
+.cfa-boto.cfa-boto-primari:disabled {
+    background: #ccc !important;
     cursor: not-allowed;
 }
 
