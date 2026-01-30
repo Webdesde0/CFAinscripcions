@@ -90,11 +90,8 @@ class CFA_Inscripcions {
      * Activació del plugin
      */
     public function activate() {
-        // Crear taula d'inscripcions
+        // Crear taules de la base de dades
         CFA_Inscripcions_DB::create_tables();
-
-        // Registrar CPT per flush rewrite rules
-        CFA_Cursos::register_post_type();
 
         // Crear rol de Professor CFA
         $this->create_professor_role();
@@ -197,8 +194,8 @@ class CFA_Inscripcions {
         // Només a les pàgines del plugin
         if (strpos($hook, 'cfa-inscripcions') === false &&
             strpos($hook, 'cfa-calendaris') === false &&
-            strpos($hook, 'cfa-configuracio') === false &&
-            get_post_type() !== 'cfa_curs') {
+            strpos($hook, 'cfa-cursos') === false &&
+            strpos($hook, 'cfa-configuracio') === false) {
             return;
         }
 
