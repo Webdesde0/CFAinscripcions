@@ -192,10 +192,23 @@ class CFA_Inscripcions {
      */
     public function enqueue_admin_assets($hook) {
         // Només a les pàgines del plugin
-        if (strpos($hook, 'cfa-inscripcions') === false &&
-            strpos($hook, 'cfa-calendaris') === false &&
-            strpos($hook, 'cfa-cursos') === false &&
-            strpos($hook, 'cfa-configuracio') === false) {
+        // Els hooks de WordPress són: toplevel_page_cfa-inscripcions, inscripcions_page_cfa-calendaris, etc.
+        $plugin_pages = array(
+            'toplevel_page_cfa-inscripcions',
+            'inscripcions_page_cfa-inscripcions',
+            'inscripcions_page_cfa-cursos',
+            'inscripcions_page_cfa-calendaris',
+            'inscripcions_page_cfa-configuracio',
+        );
+
+        // Comprovar si estem en una pàgina del plugin
+        $is_plugin_page = in_array($hook, $plugin_pages) ||
+                          strpos($hook, 'cfa-inscripcions') !== false ||
+                          strpos($hook, 'cfa-cursos') !== false ||
+                          strpos($hook, 'cfa-calendaris') !== false ||
+                          strpos($hook, 'cfa-configuracio') !== false;
+
+        if (!$is_plugin_page) {
             return;
         }
 
