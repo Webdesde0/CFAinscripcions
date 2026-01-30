@@ -4,9 +4,9 @@
 
 /* Variables CSS */
 :root {
-    --cfa-primary: #0073aa;
-    --cfa-primary-dark: #005a87;
-    --cfa-success: #46b450;
+    --cfa-primary: #56C271;
+    --cfa-primary-dark: #45a55e;
+    --cfa-success: #56C271;
     --cfa-warning: #ffb900;
     --cfa-error: #dc3232;
     --cfa-text: #333;
@@ -148,7 +148,7 @@
 
 .cfa-curs-card input:checked + .cfa-curs-card-contingut {
     border-color: var(--cfa-primary);
-    background: rgba(0, 115, 170, 0.05);
+    background: rgba(86, 194, 113, 0.05);
 }
 
 .cfa-curs-icona {
