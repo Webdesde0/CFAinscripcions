@@ -36,6 +36,47 @@ class CFA_Admin {
         add_action('wp_ajax_cfa_eliminar_excepcio', array($this, 'ajax_eliminar_excepcio'));
         add_action('wp_ajax_cfa_guardar_curs', array($this, 'ajax_guardar_curs'));
         add_action('wp_ajax_cfa_eliminar_curs', array($this, 'ajax_eliminar_curs'));
+
+        // Fallback per formularis sense JavaScript
+        add_action('admin_post_cfa_guardar_curs_form', array($this, 'handle_guardar_curs_form'));
+    }
+
+    /**
+     * Handle form submission (fallback sense JavaScript)
+     */
+    public function handle_guardar_curs_form() {
+        // Verificar nonce
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'cfa_curs_nonce')) {
+            wp_die(__('Error de seguretat. Torna-ho a provar.', 'cfa-inscripcions'));
+        }
+
+        if (!current_user_can('cfa_gestionar_calendaris')) {
+            wp_die(__('No tens permisos per fer aquesta acció.', 'cfa-inscripcions'));
+        }
+
+        $id = isset($_POST['id']) ? absint($_POST['id']) : 0;
+
+        $dades = array(
+            'nom' => sanitize_text_field($_POST['nom'] ?? ''),
+            'descripcio' => sanitize_textarea_field($_POST['descripcio'] ?? ''),
+            'calendari_id' => !empty($_POST['calendari_id']) ? absint($_POST['calendari_id']) : null,
+            'professor_id' => !empty($_POST['professor_id']) ? absint($_POST['professor_id']) : null,
+            'ordre' => absint($_POST['ordre'] ?? 0),
+            'actiu' => isset($_POST['actiu']) ? 1 : 0,
+        );
+
+        if (empty($dades['nom'])) {
+            wp_die(__('El nom és obligatori.', 'cfa-inscripcions'));
+        }
+
+        if ($id) {
+            CFA_Inscripcions_DB::actualitzar_curs($id, $dades);
+        } else {
+            CFA_Inscripcions_DB::crear_curs($dades);
+        }
+
+        wp_redirect(admin_url('admin.php?page=cfa-cursos&saved=1'));
+        exit;
     }
 
     /**
@@ -1268,7 +1309,8 @@ class CFA_Admin {
                 <?php echo $id ? __('Editar curs', 'cfa-inscripcions') : __('Nou curs', 'cfa-inscripcions'); ?>
             </h1>
 
-            <form id="cfa-curs-form" class="cfa-admin-form">
+            <form id="cfa-curs-form" class="cfa-admin-form" method="post" action="<?php echo admin_url('admin-post.php'); ?>">
+                <input type="hidden" name="action" value="cfa_guardar_curs_form">
                 <input type="hidden" name="id" value="<?php echo esc_attr($id); ?>">
                 <?php wp_nonce_field('cfa_curs_nonce', 'nonce'); ?>
 
