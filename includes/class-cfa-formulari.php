@@ -44,7 +44,7 @@ class CFA_Formulari {
         ), $atts);
 
         // Obtenir cursos actius
-        $cursos = CFA_Cursos::obtenir_cursos_actius();
+        $cursos = CFA_Inscripcions_DB::obtenir_cursos(array('actius_nomes' => true));
 
         if (empty($cursos)) {
             return '<div class="cfa-inscripcio-avís">' .
@@ -84,24 +84,18 @@ class CFA_Formulari {
                     <div class="cfa-cursos-llista">
                         <?php foreach ($cursos as $curs) : ?>
                             <?php
-                            $preseleccionat = (!empty($atts['curs']) && $atts['curs'] == $curs['id']) ? 'checked' : '';
+                            $preseleccionat = (!empty($atts['curs']) && $atts['curs'] == $curs->id) ? 'checked' : '';
                             ?>
-                            <label class="cfa-curs-card" data-curs-id="<?php echo esc_attr($curs['id']); ?>"
-                                   data-calendari-id="<?php echo esc_attr($curs['calendari_id']); ?>"
-                                   style="--curs-color: <?php echo esc_attr($curs['color']); ?>">
-                                <input type="radio" name="curs_id" value="<?php echo esc_attr($curs['id']); ?>"
-                                       data-calendari-id="<?php echo esc_attr($curs['calendari_id']); ?>"
+                            <label class="cfa-curs-card" data-curs-id="<?php echo esc_attr($curs->id); ?>"
+                                   data-calendari-id="<?php echo esc_attr($curs->calendari_id); ?>">
+                                <input type="radio" name="curs_id" value="<?php echo esc_attr($curs->id); ?>"
+                                       data-calendari-id="<?php echo esc_attr($curs->calendari_id); ?>"
                                        required <?php echo $preseleccionat; ?>>
                                 <div class="cfa-curs-card-contingut">
-                                    <?php if (!empty($curs['icona'])) : ?>
-                                        <span class="cfa-curs-icona dashicons <?php echo esc_attr($curs['icona']); ?>"></span>
-                                    <?php elseif (!empty($curs['imatge'])) : ?>
-                                        <img src="<?php echo esc_url($curs['imatge']); ?>" alt="" class="cfa-curs-imatge">
-                                    <?php endif; ?>
                                     <div class="cfa-curs-info">
-                                        <span class="cfa-curs-nom"><?php echo esc_html($curs['nom']); ?></span>
-                                        <?php if (!empty($curs['descripcio_curta'])) : ?>
-                                            <span class="cfa-curs-descripcio"><?php echo esc_html($curs['descripcio_curta']); ?></span>
+                                        <span class="cfa-curs-nom"><?php echo esc_html($curs->nom); ?></span>
+                                        <?php if (!empty($curs->descripcio)) : ?>
+                                            <span class="cfa-curs-descripcio"><?php echo esc_html($curs->descripcio); ?></span>
                                         <?php endif; ?>
                                     </div>
                                     <span class="cfa-curs-check">
@@ -391,7 +385,7 @@ class CFA_Formulari {
         $hora_cita = sanitize_text_field($_POST['hora_cita']);
 
         // Validar que el curs existeix
-        $curs = CFA_Cursos::obtenir_curs($curs_id);
+        $curs = CFA_Inscripcions_DB::obtenir_curs($curs_id);
         if (!$curs) {
             wp_send_json_error(array('message' => __('Curs no vàlid', 'cfa-inscripcions')));
         }
@@ -450,7 +444,7 @@ class CFA_Formulari {
             'message' => __('Inscripció realitzada correctament!', 'cfa-inscripcions'),
             'inscripcio_id' => $inscripcio_id,
             'detalls' => array(
-                'curs' => $curs['nom'],
+                'curs' => $curs->nom,
                 'data' => $data_formatada,
                 'hora' => $hora_formatada,
                 'nom' => $dades['nom'] . ' ' . $dades['cognoms'],

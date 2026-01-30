@@ -34,6 +34,8 @@ class CFA_Admin {
         add_action('wp_ajax_cfa_guardar_horaris', array($this, 'ajax_guardar_horaris'));
         add_action('wp_ajax_cfa_afegir_excepcio', array($this, 'ajax_afegir_excepcio'));
         add_action('wp_ajax_cfa_eliminar_excepcio', array($this, 'ajax_eliminar_excepcio'));
+        add_action('wp_ajax_cfa_guardar_curs', array($this, 'ajax_guardar_curs'));
+        add_action('wp_ajax_cfa_eliminar_curs', array($this, 'ajax_eliminar_curs'));
     }
 
     /**
@@ -59,6 +61,16 @@ class CFA_Admin {
             'cfa_veure_inscripcions',
             'cfa-inscripcions',
             array($this, 'render_page_inscripcions')
+        );
+
+        // Submenú cursos - només admins
+        add_submenu_page(
+            'cfa-inscripcions',
+            __('Cursos', 'cfa-inscripcions'),
+            __('Cursos', 'cfa-inscripcions'),
+            'cfa_gestionar_calendaris',
+            'cfa-cursos',
+            array($this, 'render_page_cursos')
         );
 
         // Submenú calendaris - només admins
@@ -126,9 +138,27 @@ class CFA_Admin {
         $pag = isset($_GET['pag']) ? max(1, absint($_GET['pag'])) : 1;
         $per_pagina = 20;
 
+        // Comprovar si és professor i filtrar per cursos assignats
+        $curs_ids_professor = array();
+        $es_professor = current_user_can('cfa_professor') && !current_user_can('manage_options');
+
+        if ($es_professor) {
+            $current_user_id = get_current_user_id();
+            $curs_ids_professor = CFA_Inscripcions_DB::obtenir_ids_cursos_professor($current_user_id);
+
+            // Si no té cursos assignats, mostrar missatge
+            if (empty($curs_ids_professor)) {
+                echo '<div class="wrap"><div class="notice notice-warning"><p>' .
+                     __('No tens cap curs assignat. Contacta amb l\'administrador.', 'cfa-inscripcions') .
+                     '</p></div></div>';
+                return;
+            }
+        }
+
         $args = array(
             'estat' => $estat,
             'curs_id' => $curs_id,
+            'curs_ids' => $curs_ids_professor, // Filtrar per cursos del professor
             'cerca' => $cerca,
             'limit' => $per_pagina,
             'offset' => ($pag - 1) * $per_pagina,
@@ -138,13 +168,18 @@ class CFA_Admin {
         $total = CFA_Inscripcions_DB::comptar_inscripcions($args);
         $total_pagines = ceil($total / $per_pagina);
 
-        // Comptadors per estat
-        $total_pendents = CFA_Inscripcions_DB::comptar_inscripcions(array('estat' => 'pendent'));
-        $total_confirmades = CFA_Inscripcions_DB::comptar_inscripcions(array('estat' => 'confirmada'));
-        $total_cancel_lades = CFA_Inscripcions_DB::comptar_inscripcions(array('estat' => 'cancel_lada'));
+        // Comptadors per estat (amb filtre de professor si cal)
+        $args_comptador = array('curs_ids' => $curs_ids_professor);
+        $total_pendents = CFA_Inscripcions_DB::comptar_inscripcions(array_merge($args_comptador, array('estat' => 'pendent')));
+        $total_confirmades = CFA_Inscripcions_DB::comptar_inscripcions(array_merge($args_comptador, array('estat' => 'confirmada')));
+        $total_cancel_lades = CFA_Inscripcions_DB::comptar_inscripcions(array_merge($args_comptador, array('estat' => 'cancel_lada')));
 
-        // Obtenir cursos per filtre
-        $cursos = CFA_Cursos::obtenir_cursos_actius();
+        // Obtenir cursos per filtre (només els del professor si cal)
+        if ($es_professor) {
+            $cursos = CFA_Inscripcions_DB::obtenir_cursos(array('professor_id' => get_current_user_id(), 'actius_nomes' => true));
+        } else {
+            $cursos = CFA_Inscripcions_DB::obtenir_cursos(array('actius_nomes' => true));
+        }
         ?>
         <div class="wrap">
             <h1 class="wp-heading-inline"><?php _e('Inscripcions', 'cfa-inscripcions'); ?></h1>
@@ -192,8 +227,8 @@ class CFA_Admin {
                     <select name="curs_id">
                         <option value=""><?php _e('Tots els cursos', 'cfa-inscripcions'); ?></option>
                         <?php foreach ($cursos as $curs) : ?>
-                            <option value="<?php echo esc_attr($curs['id']); ?>" <?php selected($curs_id, $curs['id']); ?>>
-                                <?php echo esc_html($curs['nom']); ?>
+                            <option value="<?php echo esc_attr($curs->id); ?>" <?php selected($curs_id, $curs->id); ?>>
+                                <?php echo esc_html($curs->nom); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -226,8 +261,8 @@ class CFA_Admin {
                     <?php else : ?>
                         <?php foreach ($inscripcions as $inscripcio) : ?>
                             <?php
-                            $curs = CFA_Cursos::obtenir_curs($inscripcio->curs_id);
-                            $nom_curs = $curs ? $curs['nom'] : __('Curs eliminat', 'cfa-inscripcions');
+                            $curs = CFA_Inscripcions_DB::obtenir_curs($inscripcio->curs_id);
+                            $nom_curs = $curs ? $curs->nom : __('Curs eliminat', 'cfa-inscripcions');
                             ?>
                             <tr data-id="<?php echo esc_attr($inscripcio->id); ?>">
                                 <td class="column-nom">
@@ -333,8 +368,8 @@ class CFA_Admin {
             return;
         }
 
-        $curs = CFA_Cursos::obtenir_curs($inscripcio->curs_id);
-        $nom_curs = $curs ? $curs['nom'] : __('Curs eliminat', 'cfa-inscripcions');
+        $curs = CFA_Inscripcions_DB::obtenir_curs($inscripcio->curs_id);
+        $nom_curs = $curs ? $curs->nom : __('Curs eliminat', 'cfa-inscripcions');
         ?>
         <div class="wrap">
             <h1>
@@ -485,9 +520,9 @@ class CFA_Admin {
         }
 
         // Obtenir cursos per al selector
-        $cursos = CFA_Cursos::obtenir_cursos_actius();
-        $curs_actual = CFA_Cursos::obtenir_curs($inscripcio->curs_id);
-        $nom_curs = $curs_actual ? $curs_actual['nom'] : __('Curs eliminat', 'cfa-inscripcions');
+        $cursos = CFA_Inscripcions_DB::obtenir_cursos(array('actius_nomes' => true));
+        $curs_actual = CFA_Inscripcions_DB::obtenir_curs($inscripcio->curs_id);
+        $nom_curs = $curs_actual ? $curs_actual->nom : __('Curs eliminat', 'cfa-inscripcions');
         $estat_actual = !empty($inscripcio->estat) ? $inscripcio->estat : 'pendent';
         ?>
         <div class="wrap">
@@ -579,9 +614,9 @@ class CFA_Admin {
                                         <label for="curs_id"><strong><?php _e('Curs:', 'cfa-inscripcions'); ?></strong></label><br>
                                         <select name="curs_id" id="curs_id" style="width:100%;">
                                             <?php foreach ($cursos as $curs) : ?>
-                                                <option value="<?php echo esc_attr($curs['id']); ?>"
-                                                    <?php selected($inscripcio->curs_id, $curs['id']); ?>>
-                                                    <?php echo esc_html($curs['nom']); ?>
+                                                <option value="<?php echo esc_attr($curs->id); ?>"
+                                                    <?php selected($inscripcio->curs_id, $curs->id); ?>>
+                                                    <?php echo esc_html($curs->nom); ?>
                                                 </option>
                                             <?php endforeach; ?>
                                         </select>
@@ -1091,6 +1126,249 @@ class CFA_Admin {
     }
 
     // =========================================================================
+    // PÀGINA DE CURSOS
+    // =========================================================================
+
+    /**
+     * Renderitzar pàgina de cursos
+     */
+    public function render_page_cursos() {
+        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'llistat';
+
+        switch ($action) {
+            case 'editar':
+                $this->render_curs_form();
+                break;
+            case 'nou':
+                $this->render_curs_form();
+                break;
+            default:
+                $this->render_cursos_llistat();
+                break;
+        }
+    }
+
+    /**
+     * Renderitzar llistat de cursos
+     */
+    private function render_cursos_llistat() {
+        $cursos = CFA_Inscripcions_DB::obtenir_cursos();
+        ?>
+        <div class="wrap">
+            <h1 class="wp-heading-inline"><?php _e('Cursos', 'cfa-inscripcions'); ?></h1>
+            <a href="<?php echo admin_url('admin.php?page=cfa-cursos&action=nou'); ?>" class="page-title-action">
+                <?php _e('Afegir nou', 'cfa-inscripcions'); ?>
+            </a>
+
+            <p class="description">
+                <?php _e('Gestiona els cursos disponibles per a inscripcions. Cada curs pot tenir assignat un professor i un calendari.', 'cfa-inscripcions'); ?>
+            </p>
+
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th scope="col"><?php _e('Nom', 'cfa-inscripcions'); ?></th>
+                        <th scope="col"><?php _e('Calendari', 'cfa-inscripcions'); ?></th>
+                        <th scope="col"><?php _e('Professor', 'cfa-inscripcions'); ?></th>
+                        <th scope="col"><?php _e('Ordre', 'cfa-inscripcions'); ?></th>
+                        <th scope="col"><?php _e('Estat', 'cfa-inscripcions'); ?></th>
+                        <th scope="col"><?php _e('Accions', 'cfa-inscripcions'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($cursos)) : ?>
+                        <tr>
+                            <td colspan="6"><?php _e('No hi ha cursos. Crea\'n un per començar.', 'cfa-inscripcions'); ?></td>
+                        </tr>
+                    <?php else : ?>
+                        <?php foreach ($cursos as $curs) : ?>
+                            <?php
+                            $calendari = $curs->calendari_id ? CFA_Inscripcions_DB::obtenir_calendari($curs->calendari_id) : null;
+                            $professor = $curs->professor_id ? get_userdata($curs->professor_id) : null;
+                            ?>
+                            <tr>
+                                <td>
+                                    <strong>
+                                        <a href="<?php echo admin_url('admin.php?page=cfa-cursos&action=editar&id=' . $curs->id); ?>">
+                                            <?php echo esc_html($curs->nom); ?>
+                                        </a>
+                                    </strong>
+                                    <?php if (!empty($curs->descripcio)) : ?>
+                                        <br><small><?php echo esc_html(wp_trim_words($curs->descripcio, 10)); ?></small>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if ($calendari) : ?>
+                                        <a href="<?php echo admin_url('admin.php?page=cfa-calendaris&action=editar&id=' . $calendari->id); ?>">
+                                            <?php echo esc_html($calendari->nom); ?>
+                                        </a>
+                                    <?php else : ?>
+                                        <span class="cfa-badge cfa-badge-warning"><?php _e('Sense assignar', 'cfa-inscripcions'); ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if ($professor) : ?>
+                                        <?php echo esc_html($professor->display_name); ?>
+                                    <?php else : ?>
+                                        <span style="color:#888;"><?php _e('Sense assignar', 'cfa-inscripcions'); ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td><?php echo esc_html($curs->ordre); ?></td>
+                                <td>
+                                    <?php if ($curs->actiu) : ?>
+                                        <span class="cfa-badge cfa-badge-success"><?php _e('Actiu', 'cfa-inscripcions'); ?></span>
+                                    <?php else : ?>
+                                        <span class="cfa-badge cfa-badge-secondary"><?php _e('Inactiu', 'cfa-inscripcions'); ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <a href="<?php echo admin_url('admin.php?page=cfa-cursos&action=editar&id=' . $curs->id); ?>"
+                                       class="button button-small">
+                                        <?php _e('Editar', 'cfa-inscripcions'); ?>
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
+    }
+
+    /**
+     * Renderitzar formulari de curs
+     */
+    private function render_curs_form() {
+        $id = isset($_GET['id']) ? absint($_GET['id']) : 0;
+        $curs = $id ? CFA_Inscripcions_DB::obtenir_curs($id) : null;
+
+        $nom = $curs ? $curs->nom : '';
+        $descripcio = $curs ? $curs->descripcio : '';
+        $calendari_id = $curs ? $curs->calendari_id : 0;
+        $professor_id = $curs ? $curs->professor_id : 0;
+        $ordre = $curs ? $curs->ordre : 0;
+        $actiu = $curs ? $curs->actiu : 1;
+
+        // Obtenir calendaris disponibles
+        $calendaris = CFA_Inscripcions_DB::obtenir_calendaris();
+
+        // Obtenir professors disponibles (usuaris amb rol cfa_professor o administradors)
+        $professors = get_users(array(
+            'role__in' => array('cfa_professor', 'administrator'),
+            'orderby' => 'display_name',
+            'order' => 'ASC',
+        ));
+        ?>
+        <div class="wrap">
+            <h1>
+                <a href="<?php echo admin_url('admin.php?page=cfa-cursos'); ?>" class="page-title-action">
+                    ← <?php _e('Tornar', 'cfa-inscripcions'); ?>
+                </a>
+                <?php echo $id ? __('Editar curs', 'cfa-inscripcions') : __('Nou curs', 'cfa-inscripcions'); ?>
+            </h1>
+
+            <form id="cfa-curs-form" class="cfa-admin-form">
+                <input type="hidden" name="id" value="<?php echo esc_attr($id); ?>">
+                <?php wp_nonce_field('cfa_curs_nonce', 'nonce'); ?>
+
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">
+                            <label for="nom"><?php _e('Nom del curs', 'cfa-inscripcions'); ?></label>
+                        </th>
+                        <td>
+                            <input type="text" name="nom" id="nom" value="<?php echo esc_attr($nom); ?>"
+                                   class="regular-text" required>
+                            <p class="description"><?php _e('Ex: "Llengua catalana", "Graduat ESO"', 'cfa-inscripcions'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="descripcio"><?php _e('Descripció', 'cfa-inscripcions'); ?></label>
+                        </th>
+                        <td>
+                            <textarea name="descripcio" id="descripcio" rows="3" class="large-text"><?php echo esc_textarea($descripcio); ?></textarea>
+                            <p class="description"><?php _e('Descripció breu que es mostrarà al formulari d\'inscripció.', 'cfa-inscripcions'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="calendari_id"><?php _e('Calendari assignat', 'cfa-inscripcions'); ?></label>
+                        </th>
+                        <td>
+                            <select name="calendari_id" id="calendari_id" class="regular-text">
+                                <option value=""><?php _e('-- Selecciona un calendari --', 'cfa-inscripcions'); ?></option>
+                                <?php foreach ($calendaris as $cal) : ?>
+                                    <option value="<?php echo esc_attr($cal->id); ?>" <?php selected($calendari_id, $cal->id); ?>>
+                                        <?php echo esc_html($cal->nom); ?>
+                                        <?php if (!$cal->actiu) echo ' (' . __('inactiu', 'cfa-inscripcions') . ')'; ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <p class="description">
+                                <?php _e('Selecciona el calendari que controla la disponibilitat d\'aquest curs.', 'cfa-inscripcions'); ?>
+                                <a href="<?php echo admin_url('admin.php?page=cfa-calendaris'); ?>"><?php _e('Gestionar calendaris', 'cfa-inscripcions'); ?></a>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="professor_id"><?php _e('Professor assignat', 'cfa-inscripcions'); ?></label>
+                        </th>
+                        <td>
+                            <select name="professor_id" id="professor_id" class="regular-text">
+                                <option value=""><?php _e('-- Sense assignar --', 'cfa-inscripcions'); ?></option>
+                                <?php foreach ($professors as $prof) : ?>
+                                    <option value="<?php echo esc_attr($prof->ID); ?>" <?php selected($professor_id, $prof->ID); ?>>
+                                        <?php echo esc_html($prof->display_name); ?>
+                                        <?php if (in_array('administrator', $prof->roles)) echo ' (Admin)'; ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <p class="description">
+                                <?php _e('El professor assignat podrà veure i gestionar les inscripcions d\'aquest curs.', 'cfa-inscripcions'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="ordre"><?php _e('Ordre', 'cfa-inscripcions'); ?></label>
+                        </th>
+                        <td>
+                            <input type="number" name="ordre" id="ordre"
+                                   value="<?php echo esc_attr($ordre); ?>" min="0" class="small-text">
+                            <p class="description"><?php _e('Ordre de visualització al formulari (menor = primer).', 'cfa-inscripcions'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php _e('Estat', 'cfa-inscripcions'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="actiu" value="1" <?php checked($actiu, 1); ?>>
+                                <?php _e('Curs actiu', 'cfa-inscripcions'); ?>
+                            </label>
+                            <p class="description"><?php _e('Desmarca per ocultar aquest curs del formulari d\'inscripció.', 'cfa-inscripcions'); ?></p>
+                        </td>
+                    </tr>
+                </table>
+
+                <p class="submit">
+                    <button type="submit" class="button button-primary">
+                        <?php echo $id ? __('Actualitzar curs', 'cfa-inscripcions') : __('Crear curs', 'cfa-inscripcions'); ?>
+                    </button>
+                    <?php if ($id) : ?>
+                        <button type="button" class="button button-link-delete cfa-btn-eliminar-curs" data-id="<?php echo esc_attr($id); ?>">
+                            <?php _e('Eliminar curs', 'cfa-inscripcions'); ?>
+                        </button>
+                    <?php endif; ?>
+                </p>
+            </form>
+        </div>
+        <?php
+    }
+
+    // =========================================================================
     // PÀGINA DE CONFIGURACIÓ
     // =========================================================================
 
@@ -1202,7 +1480,7 @@ class CFA_Admin {
 
         if ($result !== false) {
             // Enviar email de confirmació
-            $curs = CFA_Cursos::obtenir_curs($inscripcio->curs_id);
+            $curs = CFA_Inscripcions_DB::obtenir_curs($inscripcio->curs_id);
             $inscripcio->estat = 'confirmada';
             CFA_Emails::enviar_email_confirmacio_cita($inscripcio, $curs);
 
@@ -1238,7 +1516,7 @@ class CFA_Admin {
             CFA_Inscripcions_DB::eliminar_reserva_per_inscripcio($id);
 
             // Enviar email
-            $curs = CFA_Cursos::obtenir_curs($inscripcio->curs_id);
+            $curs = CFA_Inscripcions_DB::obtenir_curs($inscripcio->curs_id);
             CFA_Emails::enviar_email_cancel_lacio($inscripcio, $curs, $motiu);
 
             wp_send_json_success(array('message' => __('Inscripció cancel·lada.', 'cfa-inscripcions')));
@@ -1286,8 +1564,8 @@ class CFA_Admin {
 
         // Obtenir curs per actualitzar calendari_id si cal
         $curs_id = isset($_POST['curs_id']) ? absint($_POST['curs_id']) : 0;
-        $curs = CFA_Cursos::obtenir_curs($curs_id);
-        $calendari_id = $curs ? $curs['calendari_id'] : 0;
+        $curs = CFA_Inscripcions_DB::obtenir_curs($curs_id);
+        $calendari_id = $curs ? $curs->calendari_id : 0;
 
         $dades = array(
             'curs_id' => $curs_id,
@@ -1483,6 +1761,86 @@ class CFA_Admin {
             wp_send_json_success(array('message' => __('Excepció eliminada.', 'cfa-inscripcions')));
         } else {
             wp_send_json_error(array('message' => __('Error en eliminar l\'excepció.', 'cfa-inscripcions')));
+        }
+    }
+
+    /**
+     * AJAX: Guardar curs
+     */
+    public function ajax_guardar_curs() {
+        check_ajax_referer('cfa_curs_nonce', 'nonce');
+
+        if (!current_user_can('cfa_gestionar_calendaris')) {
+            wp_send_json_error(array('message' => __('No tens permisos.', 'cfa-inscripcions')));
+        }
+
+        $id = isset($_POST['id']) ? absint($_POST['id']) : 0;
+
+        $dades = array(
+            'nom' => sanitize_text_field($_POST['nom'] ?? ''),
+            'descripcio' => sanitize_textarea_field($_POST['descripcio'] ?? ''),
+            'calendari_id' => !empty($_POST['calendari_id']) ? absint($_POST['calendari_id']) : null,
+            'professor_id' => !empty($_POST['professor_id']) ? absint($_POST['professor_id']) : null,
+            'ordre' => absint($_POST['ordre'] ?? 0),
+            'actiu' => isset($_POST['actiu']) ? 1 : 0,
+        );
+
+        if (empty($dades['nom'])) {
+            wp_send_json_error(array('message' => __('El nom és obligatori.', 'cfa-inscripcions')));
+        }
+
+        if ($id) {
+            $result = CFA_Inscripcions_DB::actualitzar_curs($id, $dades);
+            $message = __('Curs actualitzat.', 'cfa-inscripcions');
+        } else {
+            $result = CFA_Inscripcions_DB::crear_curs($dades);
+            $id = $result;
+            $message = __('Curs creat.', 'cfa-inscripcions');
+        }
+
+        if ($result !== false) {
+            wp_send_json_success(array(
+                'message' => $message,
+                'id' => $id,
+                'redirect' => admin_url('admin.php?page=cfa-cursos'),
+            ));
+        } else {
+            wp_send_json_error(array('message' => __('Error en guardar el curs.', 'cfa-inscripcions')));
+        }
+    }
+
+    /**
+     * AJAX: Eliminar curs
+     */
+    public function ajax_eliminar_curs() {
+        check_ajax_referer('cfa_curs_nonce', 'nonce');
+
+        if (!current_user_can('cfa_gestionar_calendaris')) {
+            wp_send_json_error(array('message' => __('No tens permisos.', 'cfa-inscripcions')));
+        }
+
+        $id = isset($_POST['id']) ? absint($_POST['id']) : 0;
+
+        // Comprovar si hi ha inscripcions associades
+        $inscripcions = CFA_Inscripcions_DB::comptar_inscripcions(array('curs_id' => $id));
+        if ($inscripcions > 0) {
+            wp_send_json_error(array(
+                'message' => sprintf(
+                    __('No es pot eliminar el curs perquè té %d inscripcions associades.', 'cfa-inscripcions'),
+                    $inscripcions
+                )
+            ));
+        }
+
+        $result = CFA_Inscripcions_DB::eliminar_curs($id);
+
+        if ($result) {
+            wp_send_json_success(array(
+                'message' => __('Curs eliminat.', 'cfa-inscripcions'),
+                'redirect' => admin_url('admin.php?page=cfa-cursos'),
+            ));
+        } else {
+            wp_send_json_error(array('message' => __('Error en eliminar el curs.', 'cfa-inscripcions')));
         }
     }
 }

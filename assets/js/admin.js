@@ -162,6 +162,29 @@
                 }
             });
         });
+
+        // Formulari curs
+        $('#cfa-curs-form').on('submit', function(e) {
+            e.preventDefault();
+            const formData = $(this).serialize();
+            ajaxAction('cfa_guardar_curs', formData, function(response) {
+                if (response.success && response.data.redirect) {
+                    window.location.href = response.data.redirect;
+                }
+            });
+        });
+
+        // Eliminar curs
+        $(document).on('click', '.cfa-btn-eliminar-curs', function() {
+            const id = $(this).data('id');
+            if (confirm('Estàs segur que vols eliminar aquest curs?')) {
+                ajaxAction('cfa_eliminar_curs', { id: id, nonce: $('#nonce').val() }, function(response) {
+                    if (response.success && response.data.redirect) {
+                        window.location.href = response.data.redirect;
+                    }
+                });
+            }
+        });
     }
 
     /**
