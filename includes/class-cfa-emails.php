@@ -216,7 +216,7 @@ class CFA_Emails {
         <p><?php _e('S\'ha rebut una nova sol·licitud d\'inscripció amb les següents dades:', 'cfa-inscripcions'); ?></p>
 
         <div class="info-box">
-            <p><strong><?php _e('Curs:', 'cfa-inscripcions'); ?></strong> <?php echo esc_html($curs['nom']); ?></p>
+            <p><strong><?php _e('Curs:', 'cfa-inscripcions'); ?></strong> <?php echo esc_html($curs->nom); ?></p>
             <p><strong><?php _e('Data cita:', 'cfa-inscripcions'); ?></strong> <?php echo esc_html(self::formatar_data($inscripcio->data_cita)); ?></p>
             <p><strong><?php _e('Hora:', 'cfa-inscripcions'); ?></strong> <?php echo esc_html(self::formatar_hora($inscripcio->hora_cita)); ?></p>
             <p><strong><?php _e('Estat:', 'cfa-inscripcions'); ?></strong> <span class="status-pendent"><?php _e('Pendent de confirmació', 'cfa-inscripcions'); ?></span></p>
@@ -276,7 +276,7 @@ class CFA_Emails {
         <p><?php _e('Hem rebut correctament la teva sol·licitud d\'inscripció. A continuació et mostrem un resum:', 'cfa-inscripcions'); ?></p>
 
         <div class="info-box">
-            <p><strong><?php _e('Curs:', 'cfa-inscripcions'); ?></strong> <?php echo esc_html($curs['nom']); ?></p>
+            <p><strong><?php _e('Curs:', 'cfa-inscripcions'); ?></strong> <?php echo esc_html($curs->nom); ?></p>
             <p><strong><?php _e('Data cita:', 'cfa-inscripcions'); ?></strong> <?php echo esc_html(self::formatar_data($inscripcio->data_cita)); ?></p>
             <p><strong><?php _e('Hora:', 'cfa-inscripcions'); ?></strong> <?php echo esc_html(self::formatar_hora($inscripcio->hora_cita)); ?></p>
             <p><strong><?php _e('Estat:', 'cfa-inscripcions'); ?></strong> <span class="status-pendent"><?php _e('Pendent de confirmació', 'cfa-inscripcions'); ?></span></p>
@@ -314,7 +314,7 @@ class CFA_Emails {
         <p><?php _e('Ens complau comunicar-te que la teva cita d\'inscripció ha estat confirmada.', 'cfa-inscripcions'); ?></p>
 
         <div class="info-box">
-            <p><strong><?php _e('Curs:', 'cfa-inscripcions'); ?></strong> <?php echo esc_html($curs['nom']); ?></p>
+            <p><strong><?php _e('Curs:', 'cfa-inscripcions'); ?></strong> <?php echo esc_html($curs->nom); ?></p>
             <p><strong><?php _e('Data cita:', 'cfa-inscripcions'); ?></strong> <?php echo esc_html(self::formatar_data($inscripcio->data_cita)); ?></p>
             <p><strong><?php _e('Hora:', 'cfa-inscripcions'); ?></strong> <?php echo esc_html(self::formatar_hora($inscripcio->hora_cita)); ?></p>
             <p><strong><?php _e('Estat:', 'cfa-inscripcions'); ?></strong> <span class="status-confirmada"><?php _e('Confirmada', 'cfa-inscripcions'); ?></span></p>
@@ -356,7 +356,7 @@ class CFA_Emails {
         <p><?php _e('Et comuniquem que la teva inscripció ha estat cancel·lada.', 'cfa-inscripcions'); ?></p>
 
         <div class="info-box">
-            <p><strong><?php _e('Curs:', 'cfa-inscripcions'); ?></strong> <?php echo esc_html($curs['nom']); ?></p>
+            <p><strong><?php _e('Curs:', 'cfa-inscripcions'); ?></strong> <?php echo esc_html($curs->nom); ?></p>
             <p><strong><?php _e('Data cita:', 'cfa-inscripcions'); ?></strong> <?php echo esc_html(self::formatar_data($inscripcio->data_cita)); ?></p>
             <p><strong><?php _e('Hora:', 'cfa-inscripcions'); ?></strong> <?php echo esc_html(self::formatar_hora($inscripcio->hora_cita)); ?></p>
         </div>

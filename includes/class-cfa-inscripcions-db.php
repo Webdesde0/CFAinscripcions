@@ -19,6 +19,7 @@ class CFA_Inscripcions_DB {
     public static $table_horaris;
     public static $table_excepcions;
     public static $table_reserves;
+    public static $table_cursos;
 
     public static function get_instance() {
         if (null === self::$instance) {
@@ -35,6 +36,7 @@ class CFA_Inscripcions_DB {
         self::$table_horaris = $wpdb->prefix . 'cfa_horaris';
         self::$table_excepcions = $wpdb->prefix . 'cfa_excepcions';
         self::$table_reserves = $wpdb->prefix . 'cfa_reserves';
+        self::$table_cursos = $wpdb->prefix . 'cfa_cursos';
     }
 
     /**
@@ -144,8 +146,28 @@ class CFA_Inscripcions_DB {
 
         dbDelta($sql_reserves);
 
+        // Taula de cursos
+        $table_cursos = $wpdb->prefix . 'cfa_cursos';
+        $sql_cursos = "CREATE TABLE $table_cursos (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            nom varchar(200) NOT NULL,
+            descripcio text DEFAULT NULL,
+            calendari_id bigint(20) UNSIGNED DEFAULT NULL,
+            professor_id bigint(20) UNSIGNED DEFAULT NULL,
+            ordre int(11) DEFAULT 0,
+            actiu tinyint(1) DEFAULT 1,
+            data_creacio datetime DEFAULT CURRENT_TIMESTAMP,
+            data_modificacio datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY calendari_id (calendari_id),
+            KEY professor_id (professor_id),
+            KEY actiu (actiu)
+        ) $charset_collate;";
+
+        dbDelta($sql_cursos);
+
         // Guardar versió de la BD
-        update_option('cfa_inscripcions_db_version', '1.0.0');
+        update_option('cfa_inscripcions_db_version', '1.1.0');
     }
 
     /**
@@ -158,6 +180,7 @@ class CFA_Inscripcions_DB {
             $wpdb->prefix . 'cfa_reserves',
             $wpdb->prefix . 'cfa_excepcions',
             $wpdb->prefix . 'cfa_horaris',
+            $wpdb->prefix . 'cfa_cursos',
             $wpdb->prefix . 'cfa_calendaris',
             $wpdb->prefix . 'cfa_inscripcions',
         );
@@ -267,6 +290,7 @@ class CFA_Inscripcions_DB {
         $defaults = array(
             'estat' => '',
             'curs_id' => 0,
+            'curs_ids' => array(), // Per filtrar per múltiples cursos (professors)
             'calendari_id' => 0,
             'data_desde' => '',
             'data_fins' => '',
@@ -292,7 +316,12 @@ class CFA_Inscripcions_DB {
             }
         }
 
-        if (!empty($args['curs_id'])) {
+        // Filtrar per múltiples cursos (per professors)
+        if (!empty($args['curs_ids']) && is_array($args['curs_ids'])) {
+            $placeholders = implode(',', array_fill(0, count($args['curs_ids']), '%d'));
+            $where[] = "curs_id IN ($placeholders)";
+            $values = array_merge($values, array_map('intval', $args['curs_ids']));
+        } elseif (!empty($args['curs_id'])) {
             $where[] = 'curs_id = %d';
             $values[] = $args['curs_id'];
         }
@@ -353,6 +382,7 @@ class CFA_Inscripcions_DB {
         $defaults = array(
             'estat' => '',
             'curs_id' => 0,
+            'curs_ids' => array(), // Per filtrar per múltiples cursos (professors)
             'calendari_id' => 0,
         );
 
@@ -371,7 +401,12 @@ class CFA_Inscripcions_DB {
             }
         }
 
-        if (!empty($args['curs_id'])) {
+        // Filtrar per múltiples cursos (per professors)
+        if (!empty($args['curs_ids']) && is_array($args['curs_ids'])) {
+            $placeholders = implode(',', array_fill(0, count($args['curs_ids']), '%d'));
+            $where[] = "curs_id IN ($placeholders)";
+            $values = array_merge($values, array_map('intval', $args['curs_ids']));
+        } elseif (!empty($args['curs_id'])) {
             $where[] = 'curs_id = %d';
             $values[] = $args['curs_id'];
         }
@@ -572,6 +607,199 @@ class CFA_Inscripcions_DB {
 
         // Eliminar calendari
         return $wpdb->delete(self::$table_calendaris, array('id' => $id), array('%d'));
+    }
+
+    // =========================================================================
+    // MÈTODES PER CURSOS
+    // =========================================================================
+
+    /**
+     * Crear curs
+     */
+    public static function crear_curs($dades) {
+        global $wpdb;
+
+        // Assegurar que la taula està definida
+        if (empty(self::$table_cursos)) {
+            self::get_instance();
+        }
+
+        $defaults = array(
+            'ordre' => 0,
+            'actiu' => 1,
+        );
+
+        $dades = wp_parse_args($dades, $defaults);
+
+        $result = $wpdb->insert(
+            self::$table_cursos,
+            $dades,
+            array('%s', '%s', '%d', '%d', '%d', '%d')
+        );
+
+        if ($result) {
+            return $wpdb->insert_id;
+        }
+
+        return false;
+    }
+
+    /**
+     * Obtenir curs per ID
+     */
+    public static function obtenir_curs($id) {
+        global $wpdb;
+
+        // Assegurar que la taula està definida
+        if (empty(self::$table_cursos)) {
+            self::get_instance();
+        }
+
+        return $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM " . self::$table_cursos . " WHERE id = %d",
+                $id
+            )
+        );
+    }
+
+    /**
+     * Obtenir tots els cursos
+     */
+    public static function obtenir_cursos($args = array()) {
+        global $wpdb;
+
+        // Assegurar que la taula està definida
+        if (empty(self::$table_cursos)) {
+            self::get_instance();
+        }
+
+        $defaults = array(
+            'actius_nomes' => false,
+            'professor_id' => 0,
+        );
+
+        $args = wp_parse_args($args, $defaults);
+
+        $where = array('1=1');
+        $values = array();
+
+        if ($args['actius_nomes']) {
+            $where[] = 'actiu = 1';
+        }
+
+        if (!empty($args['professor_id'])) {
+            $where[] = 'professor_id = %d';
+            $values[] = $args['professor_id'];
+        }
+
+        $sql = "SELECT * FROM " . self::$table_cursos . " WHERE " . implode(' AND ', $where) . " ORDER BY ordre ASC, nom ASC";
+
+        if (!empty($values)) {
+            $sql = $wpdb->prepare($sql, $values);
+        }
+
+        return $wpdb->get_results($sql);
+    }
+
+    /**
+     * Obtenir cursos d'un professor
+     */
+    public static function obtenir_cursos_professor($professor_id) {
+        global $wpdb;
+
+        // Assegurar que la taula està definida
+        if (empty(self::$table_cursos)) {
+            self::get_instance();
+        }
+
+        return $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT * FROM " . self::$table_cursos . " WHERE professor_id = %d ORDER BY ordre ASC, nom ASC",
+                $professor_id
+            )
+        );
+    }
+
+    /**
+     * Obtenir IDs dels cursos d'un professor
+     */
+    public static function obtenir_ids_cursos_professor($professor_id) {
+        global $wpdb;
+
+        // Assegurar que la taula està definida
+        if (empty(self::$table_cursos)) {
+            self::get_instance();
+        }
+
+        $resultats = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT id FROM " . self::$table_cursos . " WHERE professor_id = %d",
+                $professor_id
+            )
+        );
+
+        return array_map('intval', $resultats);
+    }
+
+    /**
+     * Actualitzar curs
+     */
+    public static function actualitzar_curs($id, $dades) {
+        global $wpdb;
+
+        // Assegurar que la taula està definida
+        if (empty(self::$table_cursos)) {
+            self::get_instance();
+        }
+
+        // Camps permesos per actualitzar
+        $camps_permesos = array('nom', 'descripcio', 'calendari_id', 'professor_id', 'ordre', 'actiu');
+
+        // Filtrar només camps permesos
+        $dades_filtrades = array();
+        $formats = array();
+        foreach ($dades as $key => $value) {
+            if (in_array($key, $camps_permesos)) {
+                $dades_filtrades[$key] = $value;
+                // Determinar format
+                if (in_array($key, array('calendari_id', 'professor_id', 'ordre', 'actiu'))) {
+                    $formats[] = '%d';
+                } else {
+                    $formats[] = '%s';
+                }
+            }
+        }
+
+        if (empty($dades_filtrades)) {
+            return false;
+        }
+
+        return $wpdb->update(
+            self::$table_cursos,
+            $dades_filtrades,
+            array('id' => $id),
+            $formats,
+            array('%d')
+        );
+    }
+
+    /**
+     * Eliminar curs
+     */
+    public static function eliminar_curs($id) {
+        global $wpdb;
+
+        // Assegurar que la taula està definida
+        if (empty(self::$table_cursos)) {
+            self::get_instance();
+        }
+
+        return $wpdb->delete(
+            self::$table_cursos,
+            array('id' => $id),
+            array('%d')
+        );
     }
 
     // =========================================================================
