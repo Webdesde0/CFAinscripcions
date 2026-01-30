@@ -34,11 +34,10 @@ class CFA_Admin {
         add_action('wp_ajax_cfa_guardar_horaris', array($this, 'ajax_guardar_horaris'));
         add_action('wp_ajax_cfa_afegir_excepcio', array($this, 'ajax_afegir_excepcio'));
         add_action('wp_ajax_cfa_eliminar_excepcio', array($this, 'ajax_eliminar_excepcio'));
-        add_action('wp_ajax_cfa_guardar_curs', array($this, 'ajax_guardar_curs'));
-        add_action('wp_ajax_cfa_eliminar_curs', array($this, 'ajax_eliminar_curs'));
 
-        // Fallback per formularis sense JavaScript
+        // Handlers per formularis de cursos (POST directe, sense JavaScript)
         add_action('admin_post_cfa_guardar_curs_form', array($this, 'handle_guardar_curs_form'));
+        add_action('admin_post_cfa_eliminar_curs_form', array($this, 'handle_eliminar_curs_form'));
     }
 
     /**
@@ -76,6 +75,40 @@ class CFA_Admin {
         }
 
         wp_redirect(admin_url('admin.php?page=cfa-cursos&saved=1'));
+        exit;
+    }
+
+    /**
+     * Handle delete course (fallback sense JavaScript)
+     */
+    public function handle_eliminar_curs_form() {
+        $id = isset($_GET['id']) ? absint($_GET['id']) : 0;
+
+        // Verificar nonce
+        if (!wp_verify_nonce($_GET['_wpnonce'] ?? '', 'cfa_eliminar_curs_' . $id)) {
+            wp_die(__('Error de seguretat. Torna-ho a provar.', 'cfa-inscripcions'));
+        }
+
+        if (!current_user_can('cfa_gestionar_calendaris')) {
+            wp_die(__('No tens permisos per fer aquesta acció.', 'cfa-inscripcions'));
+        }
+
+        if (!$id) {
+            wp_die(__('ID de curs invàlid.', 'cfa-inscripcions'));
+        }
+
+        // Comprovar si hi ha inscripcions associades
+        $inscripcions = CFA_Inscripcions_DB::comptar_inscripcions(array('curs_id' => $id));
+        if ($inscripcions > 0) {
+            wp_die(sprintf(
+                __('No es pot eliminar el curs perquè té %d inscripcions associades.', 'cfa-inscripcions'),
+                $inscripcions
+            ));
+        }
+
+        CFA_Inscripcions_DB::eliminar_curs($id);
+
+        wp_redirect(admin_url('admin.php?page=cfa-cursos&deleted=1'));
         exit;
     }
 
@@ -1400,9 +1433,17 @@ class CFA_Admin {
                         <?php echo $id ? __('Actualitzar curs', 'cfa-inscripcions') : __('Crear curs', 'cfa-inscripcions'); ?>
                     </button>
                     <?php if ($id) : ?>
-                        <button type="button" class="button button-link-delete cfa-btn-eliminar-curs" data-id="<?php echo esc_attr($id); ?>">
+                        <?php
+                        $delete_url = wp_nonce_url(
+                            admin_url('admin-post.php?action=cfa_eliminar_curs_form&id=' . $id),
+                            'cfa_eliminar_curs_' . $id
+                        );
+                        ?>
+                        <a href="<?php echo esc_url($delete_url); ?>"
+                           class="button button-link-delete"
+                           onclick="return confirm('<?php esc_attr_e('Estàs segur que vols eliminar aquest curs?', 'cfa-inscripcions'); ?>');">
                             <?php _e('Eliminar curs', 'cfa-inscripcions'); ?>
-                        </button>
+                        </a>
                     <?php endif; ?>
                 </p>
             </form>
@@ -1803,86 +1844,6 @@ class CFA_Admin {
             wp_send_json_success(array('message' => __('Excepció eliminada.', 'cfa-inscripcions')));
         } else {
             wp_send_json_error(array('message' => __('Error en eliminar l\'excepció.', 'cfa-inscripcions')));
-        }
-    }
-
-    /**
-     * AJAX: Guardar curs
-     */
-    public function ajax_guardar_curs() {
-        check_ajax_referer('cfa_curs_nonce', 'nonce');
-
-        if (!current_user_can('cfa_gestionar_calendaris')) {
-            wp_send_json_error(array('message' => __('No tens permisos.', 'cfa-inscripcions')));
-        }
-
-        $id = isset($_POST['id']) ? absint($_POST['id']) : 0;
-
-        $dades = array(
-            'nom' => sanitize_text_field($_POST['nom'] ?? ''),
-            'descripcio' => sanitize_textarea_field($_POST['descripcio'] ?? ''),
-            'calendari_id' => !empty($_POST['calendari_id']) ? absint($_POST['calendari_id']) : null,
-            'professor_id' => !empty($_POST['professor_id']) ? absint($_POST['professor_id']) : null,
-            'ordre' => absint($_POST['ordre'] ?? 0),
-            'actiu' => isset($_POST['actiu']) ? 1 : 0,
-        );
-
-        if (empty($dades['nom'])) {
-            wp_send_json_error(array('message' => __('El nom és obligatori.', 'cfa-inscripcions')));
-        }
-
-        if ($id) {
-            $result = CFA_Inscripcions_DB::actualitzar_curs($id, $dades);
-            $message = __('Curs actualitzat.', 'cfa-inscripcions');
-        } else {
-            $result = CFA_Inscripcions_DB::crear_curs($dades);
-            $id = $result;
-            $message = __('Curs creat.', 'cfa-inscripcions');
-        }
-
-        if ($result !== false) {
-            wp_send_json_success(array(
-                'message' => $message,
-                'id' => $id,
-                'redirect' => admin_url('admin.php?page=cfa-cursos'),
-            ));
-        } else {
-            wp_send_json_error(array('message' => __('Error en guardar el curs.', 'cfa-inscripcions')));
-        }
-    }
-
-    /**
-     * AJAX: Eliminar curs
-     */
-    public function ajax_eliminar_curs() {
-        check_ajax_referer('cfa_curs_nonce', 'nonce');
-
-        if (!current_user_can('cfa_gestionar_calendaris')) {
-            wp_send_json_error(array('message' => __('No tens permisos.', 'cfa-inscripcions')));
-        }
-
-        $id = isset($_POST['id']) ? absint($_POST['id']) : 0;
-
-        // Comprovar si hi ha inscripcions associades
-        $inscripcions = CFA_Inscripcions_DB::comptar_inscripcions(array('curs_id' => $id));
-        if ($inscripcions > 0) {
-            wp_send_json_error(array(
-                'message' => sprintf(
-                    __('No es pot eliminar el curs perquè té %d inscripcions associades.', 'cfa-inscripcions'),
-                    $inscripcions
-                )
-            ));
-        }
-
-        $result = CFA_Inscripcions_DB::eliminar_curs($id);
-
-        if ($result) {
-            wp_send_json_success(array(
-                'message' => __('Curs eliminat.', 'cfa-inscripcions'),
-                'redirect' => admin_url('admin.php?page=cfa-cursos'),
-            ));
-        } else {
-            wp_send_json_error(array('message' => __('Error en eliminar el curs.', 'cfa-inscripcions')));
         }
     }
 }
