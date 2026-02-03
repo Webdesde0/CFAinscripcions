@@ -383,7 +383,7 @@ class CFA_Formulari {
             return;
         }
 
-        // 2. Rate limiting per IP (màxim 5 inscripcions per hora per IP)
+        // 2. Rate limiting per IP (màxim 10 inscripcions per hora per IP)
         $ip = $this->get_client_ip_for_rate_limit();
         $transient_key = 'cfa_rate_' . md5($ip);
         $submissions = get_transient($transient_key);
@@ -392,7 +392,7 @@ class CFA_Formulari {
             $submissions = 0;
         }
 
-        if ($submissions >= 5) {
+        if ($submissions >= 10) {
             wp_send_json_error(array(
                 'message' => __('Has superat el límit d\'inscripcions. Torna-ho a provar més tard.', 'cfa-inscripcions')
             ));
