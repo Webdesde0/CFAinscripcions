@@ -325,14 +325,12 @@
                 if (response.success && response.data.franges.length > 0) {
                     response.data.franges.forEach(function(franja) {
                         const horaInici = franja.hora_inici.substring(0, 5);
-                        const horaFi = franja.hora_fi.substring(0, 5);
 
                         const $slot = $('<div>')
                             .addClass('cfa-franja')
                             .attr('data-hora', franja.hora_inici)
                             .html(`
                                 <div class="cfa-franja-hora">${horaInici}</div>
-                                <div class="cfa-franja-places">${franja.places_disponibles} places</div>
                             `);
 
                         container.append($slot);

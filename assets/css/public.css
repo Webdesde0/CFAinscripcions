@@ -329,12 +329,12 @@
 
 .cfa-franges-llista {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px;
 }
 
 .cfa-franja {
-    padding: 12px 15px;
+    padding: 10px 8px;
     background: var(--cfa-white);
     border: 2px solid var(--cfa-border);
     border-radius: 6px;
@@ -492,15 +492,24 @@
 }
 
 .cfa-inscripcio-wrapper .cfa-boto-secundari,
-.cfa-boto.cfa-boto-secundari {
-    background: var(--cfa-white) !important;
+.cfa-boto.cfa-boto-secundari,
+.cfa-inscripcio-wrapper button.cfa-boto-secundari,
+button.cfa-boto.cfa-boto-secundari,
+.cfa-inscripcio-wrapper .cfa-pas-botons .cfa-boto-secundari {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
     color: #56C271 !important;
     border: 2px solid #56C271 !important;
+    border-color: #56C271 !important;
 }
 
 .cfa-inscripcio-wrapper .cfa-boto-secundari:hover,
-.cfa-boto.cfa-boto-secundari:hover {
+.cfa-boto.cfa-boto-secundari:hover,
+.cfa-inscripcio-wrapper button.cfa-boto-secundari:hover,
+button.cfa-boto.cfa-boto-secundari:hover,
+.cfa-inscripcio-wrapper .cfa-pas-botons .cfa-boto-secundari:hover {
     background: rgba(86, 194, 113, 0.1) !important;
+    background-color: rgba(86, 194, 113, 0.1) !important;
 }
 
 /* Enllaços dins del formulari */

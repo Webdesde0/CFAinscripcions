@@ -201,56 +201,14 @@ class CFA_Formulari {
                                        placeholder="12345678A">
                             </div>
                             <div class="cfa-camp">
-                                <label for="cfa-data-naixement"><?php _e('Data de naixement', 'cfa-inscripcions'); ?></label>
-                                <input type="date" name="data_naixement" id="cfa-data-naixement">
-                            </div>
-                        </div>
-
-                        <div class="cfa-camp-fila">
-                            <div class="cfa-camp">
                                 <label for="cfa-telefon"><?php _e('Telèfon', 'cfa-inscripcions'); ?> <span class="required">*</span></label>
                                 <input type="tel" name="telefon" id="cfa-telefon" required>
                             </div>
-                            <div class="cfa-camp">
-                                <label for="cfa-email"><?php _e('Correu electrònic', 'cfa-inscripcions'); ?> <span class="required">*</span></label>
-                                <input type="email" name="email" id="cfa-email" required>
-                            </div>
                         </div>
 
                         <div class="cfa-camp">
-                            <label for="cfa-adreca"><?php _e('Adreça', 'cfa-inscripcions'); ?></label>
-                            <input type="text" name="adreca" id="cfa-adreca">
-                        </div>
-
-                        <div class="cfa-camp-fila">
-                            <div class="cfa-camp">
-                                <label for="cfa-poblacio"><?php _e('Població', 'cfa-inscripcions'); ?></label>
-                                <input type="text" name="poblacio" id="cfa-poblacio">
-                            </div>
-                            <div class="cfa-camp cfa-camp-petit">
-                                <label for="cfa-codi-postal"><?php _e('Codi postal', 'cfa-inscripcions'); ?></label>
-                                <input type="text" name="codi_postal" id="cfa-codi-postal" maxlength="5">
-                            </div>
-                        </div>
-
-                        <div class="cfa-camp">
-                            <label for="cfa-nivell-estudis"><?php _e('Nivell d\'estudis', 'cfa-inscripcions'); ?></label>
-                            <select name="nivell_estudis" id="cfa-nivell-estudis">
-                                <option value=""><?php _e('-- Selecciona --', 'cfa-inscripcions'); ?></option>
-                                <option value="sense_estudis"><?php _e('Sense estudis', 'cfa-inscripcions'); ?></option>
-                                <option value="primaria"><?php _e('Estudis primaris', 'cfa-inscripcions'); ?></option>
-                                <option value="secundaria"><?php _e('Estudis secundaris (ESO)', 'cfa-inscripcions'); ?></option>
-                                <option value="batxillerat"><?php _e('Batxillerat', 'cfa-inscripcions'); ?></option>
-                                <option value="fp"><?php _e('Formació Professional', 'cfa-inscripcions'); ?></option>
-                                <option value="universitaris"><?php _e('Estudis universitaris', 'cfa-inscripcions'); ?></option>
-                                <option value="altres"><?php _e('Altres', 'cfa-inscripcions'); ?></option>
-                            </select>
-                        </div>
-
-                        <div class="cfa-camp">
-                            <label for="cfa-observacions"><?php _e('Observacions', 'cfa-inscripcions'); ?></label>
-                            <textarea name="observacions" id="cfa-observacions" rows="3"
-                                      placeholder="<?php _e('Qualsevol informació addicional que vulguis comunicar-nos', 'cfa-inscripcions'); ?>"></textarea>
+                            <label for="cfa-email"><?php _e('Correu electrònic', 'cfa-inscripcions'); ?> <span class="required">*</span></label>
+                            <input type="email" name="email" id="cfa-email" required>
                         </div>
 
                         <div class="cfa-camp cfa-camp-checkbox">
@@ -443,12 +401,6 @@ class CFA_Formulari {
             wp_send_json_error(array('message' => __('El telèfon ha de tenir almenys 9 dígits', 'cfa-inscripcions')));
         }
 
-        // 8. Validar codi postal (si s'ha proporcionat, ha de ser 5 dígits)
-        $codi_postal = sanitize_text_field($_POST['codi_postal'] ?? '');
-        if (!empty($codi_postal) && !preg_match('/^\d{5}$/', $codi_postal)) {
-            wp_send_json_error(array('message' => __('El codi postal ha de tenir 5 dígits', 'cfa-inscripcions')));
-        }
-
         // Validar que el curs existeix
         $curs = CFA_Inscripcions_DB::obtenir_curs($curs_id);
         if (!$curs) {
@@ -469,14 +421,8 @@ class CFA_Formulari {
             'nom'             => sanitize_text_field($_POST['nom']),
             'cognoms'         => sanitize_text_field($_POST['cognoms']),
             'dni'             => $dni,
-            'data_naixement'  => !empty($_POST['data_naixement']) ? sanitize_text_field($_POST['data_naixement']) : null,
             'telefon'         => $telefon,
             'email'           => $email,
-            'adreca'          => sanitize_text_field($_POST['adreca'] ?? ''),
-            'poblacio'        => sanitize_text_field($_POST['poblacio'] ?? ''),
-            'codi_postal'     => $codi_postal,
-            'nivell_estudis'  => sanitize_text_field($_POST['nivell_estudis'] ?? ''),
-            'observacions'    => sanitize_textarea_field($_POST['observacions'] ?? ''),
             'estat'           => 'pendent',
         );
 

@@ -28,6 +28,7 @@ class CFA_Admin {
         add_action('wp_ajax_cfa_confirmar_inscripcio', array($this, 'ajax_confirmar_inscripcio'));
         add_action('wp_ajax_cfa_cancel_lar_inscripcio', array($this, 'ajax_cancel_lar_inscripcio'));
         add_action('wp_ajax_cfa_eliminar_inscripcio', array($this, 'ajax_eliminar_inscripcio'));
+        add_action('wp_ajax_cfa_no_presentat_inscripcio', array($this, 'ajax_no_presentat_inscripcio'));
         add_action('wp_ajax_cfa_editar_inscripcio', array($this, 'ajax_editar_inscripcio'));
         add_action('wp_ajax_cfa_guardar_calendari', array($this, 'ajax_guardar_calendari'));
         add_action('wp_ajax_cfa_eliminar_calendari', array($this, 'ajax_eliminar_calendari'));
@@ -59,7 +60,6 @@ class CFA_Admin {
             'nom' => sanitize_text_field($_POST['nom'] ?? ''),
             'descripcio' => sanitize_textarea_field($_POST['descripcio'] ?? ''),
             'calendari_id' => !empty($_POST['calendari_id']) ? absint($_POST['calendari_id']) : null,
-            'professor_id' => !empty($_POST['professor_id']) ? absint($_POST['professor_id']) : null,
             'ordre' => absint($_POST['ordre'] ?? 0),
             'actiu' => isset($_POST['actiu']) ? 1 : 0,
         );
@@ -70,9 +70,14 @@ class CFA_Admin {
 
         if ($id) {
             CFA_Inscripcions_DB::actualitzar_curs($id, $dades);
+            $save_id = $id;
         } else {
-            CFA_Inscripcions_DB::crear_curs($dades);
+            $save_id = CFA_Inscripcions_DB::crear_curs($dades);
         }
+
+        // Guardar professors assignats
+        $professor_ids = isset($_POST['professor_ids']) ? array_map('absint', $_POST['professor_ids']) : array();
+        CFA_Inscripcions_DB::establir_professors_curs($save_id, $professor_ids);
 
         wp_redirect(admin_url('admin.php?page=cfa-cursos&saved=1'));
         exit;
@@ -247,6 +252,7 @@ class CFA_Admin {
         $total_pendents = CFA_Inscripcions_DB::comptar_inscripcions(array_merge($args_comptador, array('estat' => 'pendent')));
         $total_confirmades = CFA_Inscripcions_DB::comptar_inscripcions(array_merge($args_comptador, array('estat' => 'confirmada')));
         $total_cancel_lades = CFA_Inscripcions_DB::comptar_inscripcions(array_merge($args_comptador, array('estat' => 'cancel_lada')));
+        $total_no_presentats = CFA_Inscripcions_DB::comptar_inscripcions(array_merge($args_comptador, array('estat' => 'no_presentat')));
 
         // Obtenir cursos per filtre (només els del professor si cal)
         if ($es_professor) {
@@ -264,7 +270,7 @@ class CFA_Admin {
                     <a href="<?php echo admin_url('admin.php?page=cfa-inscripcions'); ?>"
                        class="<?php echo empty($estat) ? 'current' : ''; ?>">
                         <?php _e('Totes', 'cfa-inscripcions'); ?>
-                        <span class="count">(<?php echo $total_pendents + $total_confirmades + $total_cancel_lades; ?>)</span>
+                        <span class="count">(<?php echo $total_pendents + $total_confirmades + $total_cancel_lades + $total_no_presentats; ?>)</span>
                     </a> |
                 </li>
                 <li>
@@ -286,6 +292,13 @@ class CFA_Admin {
                        class="<?php echo $estat === 'cancel_lada' ? 'current' : ''; ?>">
                         <?php _e('Cancel·lades', 'cfa-inscripcions'); ?>
                         <span class="count">(<?php echo $total_cancel_lades; ?>)</span>
+                    </a> |
+                </li>
+                <li>
+                    <a href="<?php echo admin_url('admin.php?page=cfa-inscripcions&estat=no_presentat'); ?>"
+                       class="<?php echo $estat === 'no_presentat' ? 'current' : ''; ?>">
+                        <?php _e('No presentats', 'cfa-inscripcions'); ?>
+                        <span class="count">(<?php echo $total_no_presentats; ?>)</span>
                     </a>
                 </li>
             </ul>
@@ -293,11 +306,15 @@ class CFA_Admin {
             <!-- Formulari de cerca i filtres -->
             <form method="get" class="cfa-filtres-form">
                 <input type="hidden" name="page" value="cfa-inscripcions">
-                <?php if ($estat) : ?>
-                    <input type="hidden" name="estat" value="<?php echo esc_attr($estat); ?>">
-                <?php endif; ?>
-
                 <p class="search-box">
+                    <select name="estat">
+                        <option value=""><?php _e('Tots els estats', 'cfa-inscripcions'); ?></option>
+                        <option value="pendent" <?php selected($estat, 'pendent'); ?>><?php _e('Pendent', 'cfa-inscripcions'); ?></option>
+                        <option value="confirmada" <?php selected($estat, 'confirmada'); ?>><?php _e('Confirmada', 'cfa-inscripcions'); ?></option>
+                        <option value="cancel_lada" <?php selected($estat, 'cancel_lada'); ?>><?php _e('Cancel·lada', 'cfa-inscripcions'); ?></option>
+                        <option value="no_presentat" <?php selected($estat, 'no_presentat'); ?>><?php _e('No presentat', 'cfa-inscripcions'); ?></option>
+                    </select>
+
                     <select name="curs_id">
                         <option value=""><?php _e('Tots els cursos', 'cfa-inscripcions'); ?></option>
                         <?php foreach ($cursos as $curs) : ?>
@@ -387,6 +404,12 @@ class CFA_Admin {
                                         <button type="button" class="button button-small cfa-btn-cancel-lar"
                                                 data-id="<?php echo esc_attr($inscripcio->id); ?>">
                                             <?php _e('Cancel·lar', 'cfa-inscripcions'); ?>
+                                        </button>
+                                    <?php endif; ?>
+                                    <?php if ($estat_actual === 'confirmada') : ?>
+                                        <button type="button" class="button button-small cfa-btn-no-presentat"
+                                                data-id="<?php echo esc_attr($inscripcio->id); ?>">
+                                            <?php _e('No presentat', 'cfa-inscripcions'); ?>
                                         </button>
                                     <?php endif; ?>
                                 </td>
@@ -570,6 +593,14 @@ class CFA_Admin {
                                         </button>
                                     </p>
                                 <?php endif; ?>
+                                <?php if ($estat_actual === 'confirmada') : ?>
+                                    <p>
+                                        <button type="button" class="button cfa-btn-no-presentat"
+                                                data-id="<?php echo esc_attr($inscripcio->id); ?>" style="width:100%;">
+                                            <?php _e('Marcar com a no presentat', 'cfa-inscripcions'); ?>
+                                        </button>
+                                    </p>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -717,6 +748,9 @@ class CFA_Admin {
                                             <option value="cancel_lada" <?php selected($estat_actual, 'cancel_lada'); ?>>
                                                 <?php _e('Cancel·lada', 'cfa-inscripcions'); ?>
                                             </option>
+                                            <option value="no_presentat" <?php selected($estat_actual, 'no_presentat'); ?>>
+                                                <?php _e('No presentat', 'cfa-inscripcions'); ?>
+                                            </option>
                                         </select>
                                     </p>
                                 </div>
@@ -754,12 +788,14 @@ class CFA_Admin {
             'pendent' => 'cfa-badge cfa-badge-warning',
             'confirmada' => 'cfa-badge cfa-badge-success',
             'cancel_lada' => 'cfa-badge cfa-badge-error',
+            'no_presentat' => 'cfa-badge cfa-badge-secondary',
         );
 
         $texts = array(
             'pendent' => __('Pendent', 'cfa-inscripcions'),
             'confirmada' => __('Confirmada', 'cfa-inscripcions'),
             'cancel_lada' => __('Cancel·lada', 'cfa-inscripcions'),
+            'no_presentat' => __('No presentat', 'cfa-inscripcions'),
         );
 
         $class = isset($classes[$estat]) ? $classes[$estat] : 'cfa-badge';
@@ -974,6 +1010,12 @@ class CFA_Admin {
         $horaris = CFA_Inscripcions_DB::obtenir_horaris($id);
         $excepcions = CFA_Inscripcions_DB::obtenir_excepcions($id, date('Y-m-d'), date('Y-m-d', strtotime('+6 months')));
 
+        $professors = get_users(array(
+            'role__in' => array('cfa_professor', 'administrator'),
+            'orderby' => 'display_name',
+            'order' => 'ASC',
+        ));
+
         $dies_setmana = array(
             1 => __('Dilluns', 'cfa-inscripcions'),
             2 => __('Dimarts', 'cfa-inscripcions'),
@@ -1019,6 +1061,7 @@ class CFA_Admin {
                                                 <th><?php _e('Dia', 'cfa-inscripcions'); ?></th>
                                                 <th><?php _e('Hora inici', 'cfa-inscripcions'); ?></th>
                                                 <th><?php _e('Hora fi', 'cfa-inscripcions'); ?></th>
+                                                <th><?php _e('Professor', 'cfa-inscripcions'); ?></th>
                                                 <th></th>
                                             </tr>
                                         </thead>
@@ -1030,6 +1073,16 @@ class CFA_Admin {
                                                             <td><?php echo esc_html($nom); ?></td>
                                                             <td><?php echo esc_html(substr($h->hora_inici, 0, 5)); ?></td>
                                                             <td><?php echo esc_html(substr($h->hora_fi, 0, 5)); ?></td>
+                                                            <td>
+                                                                <?php
+                                                                if (!empty($h->professor_id)) {
+                                                                    $prof_data = get_userdata($h->professor_id);
+                                                                    echo $prof_data ? esc_html($prof_data->display_name) : '<span style="color:#888;">-</span>';
+                                                                } else {
+                                                                    echo '<span style="color:#888;">-</span>';
+                                                                }
+                                                                ?>
+                                                            </td>
                                                             <td>
                                                                 <button type="button" class="button button-small button-link-delete cfa-eliminar-horari"
                                                                         data-id="<?php echo esc_attr($h->id); ?>">
@@ -1055,6 +1108,16 @@ class CFA_Admin {
                                                 </td>
                                                 <td>
                                                     <input type="time" name="nou_hora_fi" value="10:00">
+                                                </td>
+                                                <td>
+                                                    <select name="nou_professor_id">
+                                                        <option value=""><?php _e('-- Sense professor --', 'cfa-inscripcions'); ?></option>
+                                                        <?php foreach ($professors as $prof) : ?>
+                                                            <option value="<?php echo esc_attr($prof->ID); ?>">
+                                                                <?php echo esc_html($prof->display_name); ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
                                                 </td>
                                                 <td>
                                                     <button type="button" class="button button-primary" id="cfa-afegir-horari">
@@ -1258,7 +1321,6 @@ class CFA_Admin {
                         <?php foreach ($cursos as $curs) : ?>
                             <?php
                             $calendari = $curs->calendari_id ? CFA_Inscripcions_DB::obtenir_calendari($curs->calendari_id) : null;
-                            $professor = $curs->professor_id ? get_userdata($curs->professor_id) : null;
                             ?>
                             <tr>
                                 <td>
@@ -1281,11 +1343,15 @@ class CFA_Admin {
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <?php if ($professor) : ?>
-                                        <?php echo esc_html($professor->display_name); ?>
-                                    <?php else : ?>
-                                        <span style="color:#888;"><?php _e('Sense assignar', 'cfa-inscripcions'); ?></span>
-                                    <?php endif; ?>
+                                    <?php
+                                    $professor_ids = CFA_Inscripcions_DB::obtenir_professors_curs($curs->id);
+                                    $professor_names = array();
+                                    foreach ($professor_ids as $pid) {
+                                        $prof = get_userdata($pid);
+                                        if ($prof) $professor_names[] = esc_html($prof->display_name);
+                                    }
+                                    echo !empty($professor_names) ? implode(', ', $professor_names) : '<span style="color:#888;">' . __('Sense assignar', 'cfa-inscripcions') . '</span>';
+                                    ?>
                                 </td>
                                 <td><?php echo esc_html($curs->ordre); ?></td>
                                 <td>
@@ -1320,9 +1386,11 @@ class CFA_Admin {
         $nom = $curs ? $curs->nom : '';
         $descripcio = $curs ? $curs->descripcio : '';
         $calendari_id = $curs ? $curs->calendari_id : 0;
-        $professor_id = $curs ? $curs->professor_id : 0;
         $ordre = $curs ? $curs->ordre : 0;
         $actiu = $curs ? $curs->actiu : 1;
+
+        // Obtenir professors assignats al curs
+        $professor_ids = $id ? CFA_Inscripcions_DB::obtenir_professors_curs($id) : array();
 
         // Obtenir calendaris disponibles
         $calendaris = CFA_Inscripcions_DB::obtenir_calendaris();
@@ -1389,20 +1457,21 @@ class CFA_Admin {
                     </tr>
                     <tr>
                         <th scope="row">
-                            <label for="professor_id"><?php _e('Professor assignat', 'cfa-inscripcions'); ?></label>
+                            <?php _e('Professors assignats', 'cfa-inscripcions'); ?>
                         </th>
                         <td>
-                            <select name="professor_id" id="professor_id" class="regular-text">
-                                <option value=""><?php _e('-- Sense assignar --', 'cfa-inscripcions'); ?></option>
+                            <fieldset>
                                 <?php foreach ($professors as $prof) : ?>
-                                    <option value="<?php echo esc_attr($prof->ID); ?>" <?php selected($professor_id, $prof->ID); ?>>
+                                    <label style="display: block; margin-bottom: 5px;">
+                                        <input type="checkbox" name="professor_ids[]" value="<?php echo esc_attr($prof->ID); ?>"
+                                            <?php checked(in_array($prof->ID, $professor_ids)); ?>>
                                         <?php echo esc_html($prof->display_name); ?>
                                         <?php if (in_array('administrator', $prof->roles)) echo ' (Admin)'; ?>
-                                    </option>
+                                    </label>
                                 <?php endforeach; ?>
-                            </select>
+                            </fieldset>
                             <p class="description">
-                                <?php _e('El professor assignat podrà veure i gestionar les inscripcions d\'aquest curs.', 'cfa-inscripcions'); ?>
+                                <?php _e('Els professors assignats podran veure i gestionar les inscripcions d\'aquest curs.', 'cfa-inscripcions'); ?>
                             </p>
                         </td>
                     </tr>
@@ -1766,12 +1835,14 @@ class CFA_Admin {
             $dia = isset($_POST['dia']) ? absint($_POST['dia']) : 0;
             $hora_inici = isset($_POST['hora_inici']) ? sanitize_text_field($_POST['hora_inici']) : '';
             $hora_fi = isset($_POST['hora_fi']) ? sanitize_text_field($_POST['hora_fi']) : '';
+            $professor_id = isset($_POST['professor_id']) ? absint($_POST['professor_id']) : null;
+            $professor_id = $professor_id === 0 ? null : $professor_id;
 
             if (!$dia || !$hora_inici || !$hora_fi) {
                 wp_send_json_error(array('message' => __('Tots els camps són obligatoris.', 'cfa-inscripcions')));
             }
 
-            $id = CFA_Inscripcions_DB::afegir_horari($calendari_id, $dia, $hora_inici, $hora_fi);
+            $id = CFA_Inscripcions_DB::afegir_horari($calendari_id, $dia, $hora_inici, $hora_fi, $professor_id);
 
             if ($id) {
                 wp_send_json_success(array(
@@ -1823,6 +1894,32 @@ class CFA_Admin {
             wp_send_json_success(array('message' => __('Excepció afegida.', 'cfa-inscripcions')));
         } else {
             wp_send_json_error(array('message' => __('Error en afegir l\'excepció.', 'cfa-inscripcions')));
+        }
+    }
+
+    /**
+     * AJAX: Marcar inscripció com a no presentat
+     */
+    public function ajax_no_presentat_inscripcio() {
+        check_ajax_referer('cfa_inscripcions_nonce', 'nonce');
+
+        if (!current_user_can('cfa_gestionar_inscripcions')) {
+            wp_send_json_error(array('message' => __('No tens permisos.', 'cfa-inscripcions')));
+        }
+
+        $id = isset($_POST['id']) ? absint($_POST['id']) : 0;
+        $inscripcio = CFA_Inscripcions_DB::obtenir_inscripcio($id);
+
+        if (!$inscripcio) {
+            wp_send_json_error(array('message' => __('Inscripció no trobada.', 'cfa-inscripcions')));
+        }
+
+        $result = CFA_Inscripcions_DB::actualitzar_estat_inscripcio($id, 'no_presentat');
+
+        if ($result !== false) {
+            wp_send_json_success(array('message' => __('Inscripció marcada com a no presentat.', 'cfa-inscripcions')));
+        } else {
+            wp_send_json_error(array('message' => __('Error en actualitzar l\'estat.', 'cfa-inscripcions')));
         }
     }
 
