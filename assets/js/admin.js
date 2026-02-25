@@ -33,6 +33,18 @@
             }
         });
 
+        // No presentat
+        $(document).on('click', '.cfa-btn-no-presentat', function() {
+            const id = $(this).data('id');
+            if (confirm('Vols marcar aquesta inscripció com a no presentat?')) {
+                ajaxAction('cfa_no_presentat_inscripcio', { id: id }, function(response) {
+                    if (response.success) {
+                        location.reload();
+                    }
+                });
+            }
+        });
+
         // Eliminar inscripció
         $(document).on('click', '.cfa-btn-eliminar', function() {
             const id = $(this).data('id');
@@ -80,12 +92,15 @@
                 return;
             }
 
+            const professorId = $('select[name="nou_professor_id"]').val();
+
             ajaxAction('cfa_guardar_horaris', {
                 calendari_id: calendariId,
                 horari_action: 'afegir',
                 dia: dia,
                 hora_inici: horaInici,
                 hora_fi: horaFi,
+                professor_id: professorId,
                 nonce: $('#nonce').val()
             }, function(response) {
                 if (response.success) {

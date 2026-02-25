@@ -20,6 +20,7 @@ class CFA_Inscripcions_DB {
     public static $table_excepcions;
     public static $table_reserves;
     public static $table_cursos;
+    public static $table_cursos_professors;
 
     public static function get_instance() {
         if (null === self::$instance) {
@@ -37,6 +38,7 @@ class CFA_Inscripcions_DB {
         self::$table_excepcions = $wpdb->prefix . 'cfa_excepcions';
         self::$table_reserves = $wpdb->prefix . 'cfa_reserves';
         self::$table_cursos = $wpdb->prefix . 'cfa_cursos';
+        self::$table_cursos_professors = $wpdb->prefix . 'cfa_cursos_professors';
     }
 
     /**
@@ -68,7 +70,7 @@ class CFA_Inscripcions_DB {
             codi_postal varchar(10) DEFAULT NULL,
             nivell_estudis varchar(100) DEFAULT NULL,
             observacions text DEFAULT NULL,
-            estat enum('pendent','confirmada','cancel_lada') DEFAULT 'pendent',
+            estat varchar(20) DEFAULT 'pendent',
             data_creacio datetime DEFAULT CURRENT_TIMESTAMP,
             data_modificacio datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             ip_usuari varchar(45) DEFAULT NULL,
@@ -105,10 +107,12 @@ class CFA_Inscripcions_DB {
             dia_setmana tinyint(1) NOT NULL COMMENT '1=Dilluns, 7=Diumenge',
             hora_inici time NOT NULL,
             hora_fi time NOT NULL,
+            professor_id bigint(20) UNSIGNED DEFAULT NULL,
             actiu tinyint(1) DEFAULT 1,
             PRIMARY KEY (id),
             KEY calendari_id (calendari_id),
-            KEY dia_setmana (dia_setmana)
+            KEY dia_setmana (dia_setmana),
+            KEY professor_id (professor_id)
         ) $charset_collate;";
 
         dbDelta($sql_horaris);
@@ -166,8 +170,37 @@ class CFA_Inscripcions_DB {
 
         dbDelta($sql_cursos);
 
+        // Taula de relació cursos-professors (many-to-many)
+        $table_cursos_professors = $wpdb->prefix . 'cfa_cursos_professors';
+        $sql_cursos_professors = "CREATE TABLE $table_cursos_professors (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            curs_id bigint(20) UNSIGNED NOT NULL,
+            professor_id bigint(20) UNSIGNED NOT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY curs_professor (curs_id, professor_id),
+            KEY curs_id (curs_id),
+            KEY professor_id (professor_id)
+        ) $charset_collate;";
+
+        dbDelta($sql_cursos_professors);
+
+        // Migrar dades existents de professor_id a la taula de relació
+        $existing = $wpdb->get_results(
+            "SELECT id, professor_id FROM $table_cursos WHERE professor_id IS NOT NULL AND professor_id > 0"
+        );
+        foreach ($existing as $row) {
+            $wpdb->replace(
+                $table_cursos_professors,
+                array('curs_id' => $row->id, 'professor_id' => $row->professor_id),
+                array('%d', '%d')
+            );
+        }
+
+        // Convertir columna estat de ENUM a VARCHAR (dbDelta no ho fa automàticament)
+        $wpdb->query("ALTER TABLE $table_inscripcions MODIFY COLUMN estat varchar(20) DEFAULT 'pendent'");
+
         // Guardar versió de la BD
-        update_option('cfa_inscripcions_db_version', '1.1.0');
+        update_option('cfa_inscripcions_db_version', '1.2.0');
     }
 
     /**
@@ -180,6 +213,7 @@ class CFA_Inscripcions_DB {
             $wpdb->prefix . 'cfa_reserves',
             $wpdb->prefix . 'cfa_excepcions',
             $wpdb->prefix . 'cfa_horaris',
+            $wpdb->prefix . 'cfa_cursos_professors',
             $wpdb->prefix . 'cfa_cursos',
             $wpdb->prefix . 'cfa_calendaris',
             $wpdb->prefix . 'cfa_inscripcions',
@@ -216,7 +250,7 @@ class CFA_Inscripcions_DB {
         $dades = wp_parse_args($dades, $defaults);
 
         // Forçar estat a pendent si no és vàlid
-        if (!in_array($dades['estat'], array('pendent', 'confirmada', 'cancel_lada'))) {
+        if (!in_array($dades['estat'], array('pendent', 'confirmada', 'cancel_lada', 'no_presentat'))) {
             $dades['estat'] = 'pendent';
         }
 
@@ -431,7 +465,7 @@ class CFA_Inscripcions_DB {
     public static function actualitzar_estat_inscripcio($id, $nou_estat) {
         global $wpdb;
 
-        $estats_valids = array('pendent', 'confirmada', 'cancel_lada');
+        $estats_valids = array('pendent', 'confirmada', 'cancel_lada', 'no_presentat');
         if (!in_array($nou_estat, $estats_valids)) {
             return false;
         }
@@ -477,7 +511,7 @@ class CFA_Inscripcions_DB {
 
         // Validar estat si s'ha proporcionat
         if (isset($dades_filtrades['estat'])) {
-            $estats_valids = array('pendent', 'confirmada', 'cancel_lada');
+            $estats_valids = array('pendent', 'confirmada', 'cancel_lada', 'no_presentat');
             if (!in_array($dades_filtrades['estat'], $estats_valids)) {
                 $dades_filtrades['estat'] = 'pendent';
             }
@@ -698,7 +732,7 @@ class CFA_Inscripcions_DB {
         }
 
         if (!empty($args['professor_id'])) {
-            $where[] = 'professor_id = %d';
+            $where[] = "id IN (SELECT curs_id FROM " . self::$table_cursos_professors . " WHERE professor_id = %d)";
             $values[] = $args['professor_id'];
         }
 
@@ -712,43 +746,87 @@ class CFA_Inscripcions_DB {
     }
 
     /**
-     * Obtenir cursos d'un professor
+     * Obtenir cursos d'un professor (via taula de relació)
      */
     public static function obtenir_cursos_professor($professor_id) {
         global $wpdb;
 
-        // Assegurar que la taula està definida
         if (empty(self::$table_cursos)) {
             self::get_instance();
         }
 
         return $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT * FROM " . self::$table_cursos . " WHERE professor_id = %d ORDER BY ordre ASC, nom ASC",
+                "SELECT c.* FROM " . self::$table_cursos . " c
+                 INNER JOIN " . self::$table_cursos_professors . " cp ON c.id = cp.curs_id
+                 WHERE cp.professor_id = %d
+                 ORDER BY c.ordre ASC, c.nom ASC",
                 $professor_id
             )
         );
     }
 
     /**
-     * Obtenir IDs dels cursos d'un professor
+     * Obtenir IDs dels cursos d'un professor (via taula de relació)
      */
     public static function obtenir_ids_cursos_professor($professor_id) {
         global $wpdb;
 
-        // Assegurar que la taula està definida
-        if (empty(self::$table_cursos)) {
+        if (empty(self::$table_cursos_professors)) {
             self::get_instance();
         }
 
         $resultats = $wpdb->get_col(
             $wpdb->prepare(
-                "SELECT id FROM " . self::$table_cursos . " WHERE professor_id = %d",
+                "SELECT curs_id FROM " . self::$table_cursos_professors . " WHERE professor_id = %d",
                 $professor_id
             )
         );
 
         return array_map('intval', $resultats);
+    }
+
+    /**
+     * Establir professors d'un curs (substitueix tots els existents)
+     */
+    public static function establir_professors_curs($curs_id, $professor_ids) {
+        global $wpdb;
+
+        if (empty(self::$table_cursos_professors)) {
+            self::get_instance();
+        }
+
+        // Eliminar assignacions existents
+        $wpdb->delete(self::$table_cursos_professors, array('curs_id' => $curs_id), array('%d'));
+
+        // Inserir noves assignacions
+        foreach ($professor_ids as $professor_id) {
+            if (!empty($professor_id)) {
+                $wpdb->insert(
+                    self::$table_cursos_professors,
+                    array('curs_id' => $curs_id, 'professor_id' => absint($professor_id)),
+                    array('%d', '%d')
+                );
+            }
+        }
+    }
+
+    /**
+     * Obtenir professors d'un curs
+     */
+    public static function obtenir_professors_curs($curs_id) {
+        global $wpdb;
+
+        if (empty(self::$table_cursos_professors)) {
+            self::get_instance();
+        }
+
+        return $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT professor_id FROM " . self::$table_cursos_professors . " WHERE curs_id = %d",
+                $curs_id
+            )
+        );
     }
 
     /**
@@ -818,7 +896,7 @@ class CFA_Inscripcions_DB {
     /**
      * Afegir horari recurrent
      */
-    public static function afegir_horari($calendari_id, $dia_setmana, $hora_inici, $hora_fi) {
+    public static function afegir_horari($calendari_id, $dia_setmana, $hora_inici, $hora_fi, $professor_id = null) {
         global $wpdb;
 
         $result = $wpdb->insert(
@@ -828,9 +906,10 @@ class CFA_Inscripcions_DB {
                 'dia_setmana' => $dia_setmana,
                 'hora_inici' => $hora_inici,
                 'hora_fi' => $hora_fi,
+                'professor_id' => $professor_id,
                 'actiu' => 1,
             ),
-            array('%d', '%d', '%s', '%s', '%d')
+            array('%d', '%d', '%s', '%s', '%d', '%d')
         );
 
         if ($result) {
@@ -1036,22 +1115,15 @@ class CFA_Inscripcions_DB {
     }
 
     /**
-     * Comprovar si una franja té places disponibles
+     * Comprovar si una franja de 15 minuts té places disponibles
      */
     public static function te_places_disponibles($calendari_id, $data, $hora) {
-        $calendari = self::obtenir_calendari($calendari_id);
-
-        if (!$calendari) {
-            return false;
-        }
-
         $reserves = self::comptar_reserves($calendari_id, $data, $hora);
-
-        return $reserves < $calendari->places_per_franja;
+        return $reserves < 1;
     }
 
     /**
-     * Obtenir franges disponibles per un dia
+     * Obtenir franges disponibles per un dia (intervals de 15 minuts)
      */
     public static function obtenir_franges_disponibles($calendari_id, $data) {
         global $wpdb;
@@ -1088,13 +1160,14 @@ class CFA_Inscripcions_DB {
         // Processar excepcions
         $dia_cancelat = false;
         $horaris_extres = array();
+        $horaris_cancelats = array();
 
         foreach ($excepcions as $exc) {
             if ($exc->tipus === 'cancel_lar' && empty($exc->hora_inici)) {
-                // Cancel·lació de tot el dia
                 $dia_cancelat = true;
+            } elseif ($exc->tipus === 'cancel_lar' && !empty($exc->hora_inici)) {
+                $horaris_cancelats[] = $exc->hora_inici;
             } elseif ($exc->tipus === 'afegir') {
-                // Afegir horari extra
                 $horaris_extres[] = $exc;
             }
         }
@@ -1103,45 +1176,57 @@ class CFA_Inscripcions_DB {
             return array();
         }
 
-        // Processar horaris recurrents
+        // Processar horaris recurrents - dividir en intervals de 15 minuts
         foreach ($horaris as $horari) {
-            // Comprovar si aquest horari específic està cancel·lat
-            $cancelat = false;
-            foreach ($excepcions as $exc) {
-                if ($exc->tipus === 'cancel_lar' && $exc->hora_inici === $horari->hora_inici) {
-                    $cancelat = true;
-                    break;
-                }
+            if (in_array($horari->hora_inici, $horaris_cancelats)) {
+                continue;
             }
 
-            if (!$cancelat) {
-                $reserves = self::comptar_reserves($calendari_id, $data, $horari->hora_inici);
-                $places_disponibles = $calendari->places_per_franja - $reserves;
+            $start = strtotime($horari->hora_inici);
+            $end = strtotime($horari->hora_fi);
 
-                if ($places_disponibles > 0) {
+            while ($start < $end) {
+                $slot_hora = date('H:i:s', $start);
+                $slot_hora_fi = date('H:i:s', $start + 900);
+
+                $reserves = self::comptar_reserves($calendari_id, $data, $slot_hora);
+
+                if ($reserves < 1) {
                     $franges[] = array(
-                        'hora_inici' => $horari->hora_inici,
-                        'hora_fi' => $horari->hora_fi,
-                        'places_disponibles' => $places_disponibles,
-                        'places_totals' => $calendari->places_per_franja,
+                        'hora_inici' => $slot_hora,
+                        'hora_fi' => $slot_hora_fi,
+                        'places_disponibles' => 1,
+                        'places_totals' => 1,
+                        'professor_id' => isset($horari->professor_id) ? $horari->professor_id : null,
                     );
                 }
+
+                $start += 900; // Avançar 15 minuts
             }
         }
 
-        // Afegir horaris extres
+        // Processar horaris extres - també dividir en intervals de 15 minuts
         foreach ($horaris_extres as $extra) {
-            $places = $extra->places_especials ?: $calendari->places_per_franja;
-            $reserves = self::comptar_reserves($calendari_id, $data, $extra->hora_inici);
-            $places_disponibles = $places - $reserves;
+            $start = strtotime($extra->hora_inici);
+            $end = strtotime($extra->hora_fi);
 
-            if ($places_disponibles > 0) {
-                $franges[] = array(
-                    'hora_inici' => $extra->hora_inici,
-                    'hora_fi' => $extra->hora_fi,
-                    'places_disponibles' => $places_disponibles,
-                    'places_totals' => $places,
-                );
+            while ($start < $end) {
+                $slot_hora = date('H:i:s', $start);
+                $slot_hora_fi = date('H:i:s', $start + 900);
+
+                $reserves = self::comptar_reserves($calendari_id, $data, $slot_hora);
+
+                if ($reserves < 1) {
+                    $franges[] = array(
+                        'hora_inici' => $slot_hora,
+                        'hora_fi' => $slot_hora_fi,
+                        'places_disponibles' => 1,
+                        'places_totals' => 1,
+                        'professor_id' => null,
+                    );
+                }
+
+                $start += 900;
             }
         }
 

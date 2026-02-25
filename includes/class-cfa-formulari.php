@@ -76,6 +76,11 @@ class CFA_Formulari {
             <form id="cfa-inscripcio-form" method="post">
                 <?php wp_nonce_field('cfa_inscripcio_nonce', 'cfa_nonce'); ?>
 
+                <!-- Honeypot anti-spam (camp ocult que els bots omplen) -->
+                <div style="position: absolute; left: -9999px;" aria-hidden="true">
+                    <input type="text" name="website_url" tabindex="-1" autocomplete="off" value="">
+                </div>
+
                 <!-- PAS 1: Selecció de curs -->
                 <div class="cfa-pas-contingut cfa-pas-contingut-actiu" id="cfa-pas-1">
                     <h2><?php _e('Selecciona el curs', 'cfa-inscripcions'); ?></h2>
@@ -196,56 +201,14 @@ class CFA_Formulari {
                                        placeholder="12345678A">
                             </div>
                             <div class="cfa-camp">
-                                <label for="cfa-data-naixement"><?php _e('Data de naixement', 'cfa-inscripcions'); ?></label>
-                                <input type="date" name="data_naixement" id="cfa-data-naixement">
-                            </div>
-                        </div>
-
-                        <div class="cfa-camp-fila">
-                            <div class="cfa-camp">
                                 <label for="cfa-telefon"><?php _e('Telèfon', 'cfa-inscripcions'); ?> <span class="required">*</span></label>
                                 <input type="tel" name="telefon" id="cfa-telefon" required>
                             </div>
-                            <div class="cfa-camp">
-                                <label for="cfa-email"><?php _e('Correu electrònic', 'cfa-inscripcions'); ?> <span class="required">*</span></label>
-                                <input type="email" name="email" id="cfa-email" required>
-                            </div>
                         </div>
 
                         <div class="cfa-camp">
-                            <label for="cfa-adreca"><?php _e('Adreça', 'cfa-inscripcions'); ?></label>
-                            <input type="text" name="adreca" id="cfa-adreca">
-                        </div>
-
-                        <div class="cfa-camp-fila">
-                            <div class="cfa-camp">
-                                <label for="cfa-poblacio"><?php _e('Població', 'cfa-inscripcions'); ?></label>
-                                <input type="text" name="poblacio" id="cfa-poblacio">
-                            </div>
-                            <div class="cfa-camp cfa-camp-petit">
-                                <label for="cfa-codi-postal"><?php _e('Codi postal', 'cfa-inscripcions'); ?></label>
-                                <input type="text" name="codi_postal" id="cfa-codi-postal" maxlength="5">
-                            </div>
-                        </div>
-
-                        <div class="cfa-camp">
-                            <label for="cfa-nivell-estudis"><?php _e('Nivell d\'estudis', 'cfa-inscripcions'); ?></label>
-                            <select name="nivell_estudis" id="cfa-nivell-estudis">
-                                <option value=""><?php _e('-- Selecciona --', 'cfa-inscripcions'); ?></option>
-                                <option value="sense_estudis"><?php _e('Sense estudis', 'cfa-inscripcions'); ?></option>
-                                <option value="primaria"><?php _e('Estudis primaris', 'cfa-inscripcions'); ?></option>
-                                <option value="secundaria"><?php _e('Estudis secundaris (ESO)', 'cfa-inscripcions'); ?></option>
-                                <option value="batxillerat"><?php _e('Batxillerat', 'cfa-inscripcions'); ?></option>
-                                <option value="fp"><?php _e('Formació Professional', 'cfa-inscripcions'); ?></option>
-                                <option value="universitaris"><?php _e('Estudis universitaris', 'cfa-inscripcions'); ?></option>
-                                <option value="altres"><?php _e('Altres', 'cfa-inscripcions'); ?></option>
-                            </select>
-                        </div>
-
-                        <div class="cfa-camp">
-                            <label for="cfa-observacions"><?php _e('Observacions', 'cfa-inscripcions'); ?></label>
-                            <textarea name="observacions" id="cfa-observacions" rows="3"
-                                      placeholder="<?php _e('Qualsevol informació addicional que vulguis comunicar-nos', 'cfa-inscripcions'); ?>"></textarea>
+                            <label for="cfa-email"><?php _e('Correu electrònic', 'cfa-inscripcions'); ?> <span class="required">*</span></label>
+                            <input type="email" name="email" id="cfa-email" required>
                         </div>
 
                         <div class="cfa-camp cfa-camp-checkbox">
@@ -368,6 +331,32 @@ class CFA_Formulari {
     public function ajax_enviar_inscripcio() {
         check_ajax_referer('cfa_inscripcions_nonce', 'nonce');
 
+        // 1. Verificació honeypot anti-spam (si té valor, és un bot)
+        if (!empty($_POST['website_url'])) {
+            // Silenciosament rebutjar però simular èxit per confondre bots
+            wp_send_json_success(array(
+                'message' => __('Inscripció realitzada correctament!', 'cfa-inscripcions'),
+                'inscripcio_id' => 0,
+            ));
+            return;
+        }
+
+        // 2. Rate limiting per IP (màxim 10 inscripcions per hora per IP)
+        $ip = $this->get_client_ip_for_rate_limit();
+        $transient_key = 'cfa_rate_' . md5($ip);
+        $submissions = get_transient($transient_key);
+
+        if ($submissions === false) {
+            $submissions = 0;
+        }
+
+        if ($submissions >= 10) {
+            wp_send_json_error(array(
+                'message' => __('Has superat el límit d\'inscripcions. Torna-ho a provar més tard.', 'cfa-inscripcions')
+            ));
+            return;
+        }
+
         // Validar camps obligatoris
         $camps_obligatoris = array('curs_id', 'calendari_id', 'data_cita', 'hora_cita', 'nom', 'cognoms', 'dni', 'telefon', 'email');
 
@@ -384,6 +373,34 @@ class CFA_Formulari {
         $data_cita = sanitize_text_field($_POST['data_cita']);
         $hora_cita = sanitize_text_field($_POST['hora_cita']);
 
+        // 3. Validar format de data (YYYY-MM-DD)
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $data_cita)) {
+            wp_send_json_error(array('message' => __('Format de data invàlid', 'cfa-inscripcions')));
+        }
+
+        // 4. Validar format d'hora (HH:MM:SS o HH:MM)
+        if (!preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $hora_cita)) {
+            wp_send_json_error(array('message' => __('Format d\'hora invàlid', 'cfa-inscripcions')));
+        }
+
+        // 5. Validar DNI/NIE espanyol
+        $dni = strtoupper(sanitize_text_field($_POST['dni']));
+        if (!$this->validar_dni_nie($dni)) {
+            wp_send_json_error(array('message' => __('El DNI/NIE introduït no és vàlid', 'cfa-inscripcions')));
+        }
+
+        // 6. Validar email
+        $email = sanitize_email($_POST['email']);
+        if (!is_email($email)) {
+            wp_send_json_error(array('message' => __('El correu electrònic no és vàlid', 'cfa-inscripcions')));
+        }
+
+        // 7. Validar telèfon (mínim 9 dígits)
+        $telefon = preg_replace('/[^0-9+]/', '', $_POST['telefon']);
+        if (strlen($telefon) < 9) {
+            wp_send_json_error(array('message' => __('El telèfon ha de tenir almenys 9 dígits', 'cfa-inscripcions')));
+        }
+
         // Validar que el curs existeix
         $curs = CFA_Inscripcions_DB::obtenir_curs($curs_id);
         if (!$curs) {
@@ -395,12 +412,6 @@ class CFA_Formulari {
             wp_send_json_error(array('message' => __('Aquesta franja horària ja no està disponible. Si us plau, selecciona una altra.', 'cfa-inscripcions')));
         }
 
-        // Validar email
-        $email = sanitize_email($_POST['email']);
-        if (!is_email($email)) {
-            wp_send_json_error(array('message' => __('El correu electrònic no és vàlid', 'cfa-inscripcions')));
-        }
-
         // Preparar dades
         $dades = array(
             'curs_id'         => $curs_id,
@@ -409,15 +420,9 @@ class CFA_Formulari {
             'hora_cita'       => $hora_cita,
             'nom'             => sanitize_text_field($_POST['nom']),
             'cognoms'         => sanitize_text_field($_POST['cognoms']),
-            'dni'             => strtoupper(sanitize_text_field($_POST['dni'])),
-            'data_naixement'  => !empty($_POST['data_naixement']) ? sanitize_text_field($_POST['data_naixement']) : null,
-            'telefon'         => sanitize_text_field($_POST['telefon']),
+            'dni'             => $dni,
+            'telefon'         => $telefon,
             'email'           => $email,
-            'adreca'          => sanitize_text_field($_POST['adreca'] ?? ''),
-            'poblacio'        => sanitize_text_field($_POST['poblacio'] ?? ''),
-            'codi_postal'     => sanitize_text_field($_POST['codi_postal'] ?? ''),
-            'nivell_estudis'  => sanitize_text_field($_POST['nivell_estudis'] ?? ''),
-            'observacions'    => sanitize_textarea_field($_POST['observacions'] ?? ''),
             'estat'           => 'pendent',
         );
 
@@ -430,6 +435,9 @@ class CFA_Formulari {
 
         // Crear reserva
         CFA_Inscripcions_DB::crear_reserva($calendari_id, $inscripcio_id, $data_cita, $hora_cita);
+
+        // Incrementar comptador rate limit
+        set_transient($transient_key, $submissions + 1, HOUR_IN_SECONDS);
 
         // Enviar emails
         $inscripcio = CFA_Inscripcions_DB::obtenir_inscripcio($inscripcio_id);
@@ -450,5 +458,69 @@ class CFA_Formulari {
                 'nom' => $dades['nom'] . ' ' . $dades['cognoms'],
             ),
         ));
+    }
+
+    /**
+     * Validar DNI/NIE espanyol
+     *
+     * @param string $document DNI o NIE a validar
+     * @return bool True si és vàlid
+     */
+    private function validar_dni_nie($document) {
+        $document = strtoupper(trim($document));
+
+        // Longitud: 8-9 caràcters (NIE té lletra inicial)
+        if (strlen($document) < 8 || strlen($document) > 9) {
+            return false;
+        }
+
+        // NIE: Comença amb X, Y, Z
+        $nie_prefixes = array('X' => 0, 'Y' => 1, 'Z' => 2);
+
+        if (isset($nie_prefixes[$document[0]])) {
+            // És NIE: substituïm la lletra inicial pel número corresponent
+            $document = $nie_prefixes[$document[0]] . substr($document, 1);
+        }
+
+        // Format: 8 dígits + 1 lletra
+        if (!preg_match('/^[0-9]{8}[A-Z]$/', $document)) {
+            return false;
+        }
+
+        // Calcular lletra de control
+        $numero = substr($document, 0, 8);
+        $lletra = substr($document, -1);
+        $lletres = 'TRWAGMYFPDXBNJZSQVHLCKE';
+        $lletra_calculada = $lletres[$numero % 23];
+
+        return $lletra === $lletra_calculada;
+    }
+
+    /**
+     * Obtenir IP del client per rate limiting
+     *
+     * @return string IP del client
+     */
+    private function get_client_ip_for_rate_limit() {
+        $ip = '';
+
+        // Prioritzar headers de proxy si existeixen
+        if (!empty($_SERVER['HTTP_CLIENT_IP']) && filter_var($_SERVER['HTTP_CLIENT_IP'], FILTER_VALIDATE_IP)) {
+            $ip = $_SERVER['HTTP_CLIENT_IP'];
+        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            // Pot contenir múltiples IPs, agafem la primera
+            $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+            $ip = trim($ips[0]);
+            if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+                $ip = '';
+            }
+        }
+
+        // Fallback a REMOTE_ADDR
+        if (empty($ip) && !empty($_SERVER['REMOTE_ADDR'])) {
+            $ip = $_SERVER['REMOTE_ADDR'];
+        }
+
+        return sanitize_text_field($ip);
     }
 }
