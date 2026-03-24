@@ -1466,7 +1466,13 @@ class CFA_Admin {
                                         <input type="checkbox" name="professor_ids[]" value="<?php echo esc_attr($prof->ID); ?>"
                                             <?php checked(in_array($prof->ID, $professor_ids)); ?>>
                                         <?php echo esc_html($prof->display_name); ?>
-                                        <?php if (in_array('administrator', $prof->roles)) echo ' (Admin)'; ?>
+                                        <?php
+                                        if (in_array('administrator', $prof->roles)) {
+                                            echo ' (Admin)';
+                                        } elseif (in_array('cfa_professor', $prof->roles)) {
+                                            echo ' (Professor)';
+                                        }
+                                        ?>
                                     </label>
                                 <?php endforeach; ?>
                             </fieldset>
