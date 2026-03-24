@@ -78,7 +78,8 @@ class CFA_Inscripcions_DB {
             KEY curs_id (curs_id),
             KEY calendari_id (calendari_id),
             KEY estat (estat),
-            KEY data_cita (data_cita)
+            KEY data_cita (data_cita),
+            UNIQUE KEY curs_dni (curs_id, dni)
         ) $charset_collate;";
 
         dbDelta($sql_inscripcions);
@@ -199,8 +200,11 @@ class CFA_Inscripcions_DB {
         // Convertir columna estat de ENUM a VARCHAR (dbDelta no ho fa automàticament)
         $wpdb->query("ALTER TABLE $table_inscripcions MODIFY COLUMN estat varchar(20) DEFAULT 'pendent'");
 
+        // Afegir UNIQUE constraint per evitar duplicats DNI+curs (ignorar error si ja existeix)
+        $wpdb->query("ALTER TABLE $table_inscripcions ADD UNIQUE KEY curs_dni (curs_id, dni)");
+
         // Guardar versió de la BD
-        update_option('cfa_inscripcions_db_version', '1.2.0');
+        update_option('cfa_inscripcions_db_version', '1.2.1');
     }
 
     /**
@@ -294,6 +298,26 @@ class CFA_Inscripcions_DB {
         }
 
         return false;
+    }
+
+    /**
+     * Comprovar si un DNI ja està inscrit a un curs
+     */
+    public static function dni_inscrit_a_curs($curs_id, $dni) {
+        global $wpdb;
+
+        if (empty(self::$table_inscripcions)) {
+            self::get_instance();
+        }
+
+        $count = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM " . self::$table_inscripcions . "
+             WHERE curs_id = %d AND dni = %s AND estat != 'cancel_lada'",
+            $curs_id,
+            strtoupper($dni)
+        ));
+
+        return $count > 0;
     }
 
     /**

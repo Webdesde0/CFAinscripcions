@@ -186,11 +186,15 @@ class CFA_Formulari {
                         <div class="cfa-camp-fila">
                             <div class="cfa-camp">
                                 <label for="cfa-nom"><?php _e('Nom', 'cfa-inscripcions'); ?> <span class="required">*</span></label>
-                                <input type="text" name="nom" id="cfa-nom" required>
+                                <input type="text" name="nom" id="cfa-nom" required
+                                       oninvalid="this.setCustomValidity('Introdueix el teu nom')"
+                                       oninput="this.setCustomValidity('')">
                             </div>
                             <div class="cfa-camp">
                                 <label for="cfa-cognoms"><?php _e('Cognoms', 'cfa-inscripcions'); ?> <span class="required">*</span></label>
-                                <input type="text" name="cognoms" id="cfa-cognoms" required>
+                                <input type="text" name="cognoms" id="cfa-cognoms" required
+                                       oninvalid="this.setCustomValidity('Introdueix els teus cognoms')"
+                                       oninput="this.setCustomValidity('')">
                             </div>
                         </div>
 
@@ -198,26 +202,34 @@ class CFA_Formulari {
                             <div class="cfa-camp">
                                 <label for="cfa-dni"><?php _e('DNI/NIE', 'cfa-inscripcions'); ?> <span class="required">*</span></label>
                                 <input type="text" name="dni" id="cfa-dni" required pattern="[0-9A-Za-z]{8,9}[A-Za-z]?"
-                                       placeholder="12345678A">
+                                       placeholder="12345678A"
+                                       oninvalid="this.setCustomValidity('Introdueix un DNI/NIE vàlid')"
+                                       oninput="this.setCustomValidity('')">
                             </div>
                             <div class="cfa-camp">
                                 <label for="cfa-telefon"><?php _e('Telèfon', 'cfa-inscripcions'); ?> <span class="required">*</span></label>
-                                <input type="tel" name="telefon" id="cfa-telefon" required>
+                                <input type="tel" name="telefon" id="cfa-telefon" required
+                                       oninvalid="this.setCustomValidity('Introdueix el teu telèfon')"
+                                       oninput="this.setCustomValidity('')">
                             </div>
                         </div>
 
                         <div class="cfa-camp">
                             <label for="cfa-email"><?php _e('Correu electrònic', 'cfa-inscripcions'); ?> <span class="required">*</span></label>
-                            <input type="email" name="email" id="cfa-email" required>
+                            <input type="email" name="email" id="cfa-email" required
+                                   oninvalid="this.setCustomValidity('Introdueix un correu electrònic vàlid')"
+                                   oninput="this.setCustomValidity('')">
                         </div>
 
                         <div class="cfa-camp cfa-camp-checkbox">
                             <label>
-                                <input type="checkbox" name="accepta_privacitat" id="cfa-accepta-privacitat" required>
+                                <input type="checkbox" name="accepta_privacitat" id="cfa-accepta-privacitat" required
+                                       oninvalid="this.setCustomValidity('Has d\'acceptar la política de privacitat per continuar.')"
+                                       oninput="this.setCustomValidity('')">
                                 <?php
                                 printf(
                                     __('He llegit i accepto la %spolítica de privacitat%s', 'cfa-inscripcions'),
-                                    '<a href="' . esc_url(get_privacy_policy_url()) . '" target="_blank">',
+                                    '<a href="https://cfalagarrotxa.cat/politica-privacitat/" target="_blank">',
                                     '</a>'
                                 );
                                 ?>
@@ -399,6 +411,11 @@ class CFA_Formulari {
         $telefon = preg_replace('/[^0-9+]/', '', $_POST['telefon']);
         if (strlen($telefon) < 9) {
             wp_send_json_error(array('message' => __('El telèfon ha de tenir almenys 9 dígits', 'cfa-inscripcions')));
+        }
+
+        // 8. Comprovar si el DNI ja està inscrit a aquest curs
+        if (CFA_Inscripcions_DB::dni_inscrit_a_curs($curs_id, $dni)) {
+            wp_send_json_error(array('message' => __('Ja existeix una inscripció amb aquest DNI per a aquest curs. Si necessites modificar la teva inscripció, contacta amb el centre.', 'cfa-inscripcions')));
         }
 
         // Validar que el curs existeix

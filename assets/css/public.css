@@ -234,20 +234,25 @@
 
 .cfa-calendari-nav {
     background: none;
-    border: 1px solid var(--cfa-border);
+    border: 2px solid var(--cfa-primary) !important;
     border-radius: 4px;
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
+    color: var(--cfa-primary) !important;
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 1;
 }
 
 .cfa-calendari-nav:hover {
-    background: var(--cfa-bg);
-    border-color: var(--cfa-primary);
+    background: var(--cfa-primary) !important;
+    border-color: var(--cfa-primary) !important;
+    color: #fff !important;
 }
 
 .cfa-calendari-nav:disabled {
