@@ -401,6 +401,11 @@ class CFA_Formulari {
             wp_send_json_error(array('message' => __('El telèfon ha de tenir almenys 9 dígits', 'cfa-inscripcions')));
         }
 
+        // 8. Comprovar si el DNI ja està inscrit a aquest curs
+        if (CFA_Inscripcions_DB::dni_inscrit_a_curs($curs_id, $dni)) {
+            wp_send_json_error(array('message' => __('Ja existeix una inscripció amb aquest DNI per a aquest curs. Si necessites modificar la teva inscripció, contacta amb el centre.', 'cfa-inscripcions')));
+        }
+
         // Validar que el curs existeix
         $curs = CFA_Inscripcions_DB::obtenir_curs($curs_id);
         if (!$curs) {

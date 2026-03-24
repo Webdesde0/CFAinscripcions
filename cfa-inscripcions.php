@@ -3,7 +3,7 @@
  * Plugin Name: CFA Inscripcions
  * Plugin URI: https://github.com/Webdesde0/CFAinscripcions
  * Description: Plugin de gestió d'inscripcions per a Centres de Formació d'Adults (CFA). Permet crear cursos i gestionar inscripcions amb formulari públic.
- * Version: 1.2.0
+ * Version: 1.2.1
  * Author: CFA
  * Author URI: https://github.com/Webdesde0
  * License: GPL v2 or later
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Definir constants del plugin
-define('CFA_INSCRIPCIONS_VERSION', '1.2.0');
+define('CFA_INSCRIPCIONS_VERSION', '1.2.1');
 define('CFA_INSCRIPCIONS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CFA_INSCRIPCIONS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('CFA_INSCRIPCIONS_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -137,7 +137,7 @@ class CFA_Inscripcions {
     public function init() {
         // Comprovar si cal actualitzar la BD
         $current_db_version = get_option('cfa_inscripcions_db_version', '0');
-        if (version_compare($current_db_version, '1.2.0', '<')) {
+        if (version_compare($current_db_version, '1.2.1', '<')) {
             CFA_Inscripcions_DB::create_tables();
         }
 
