@@ -262,7 +262,7 @@ class CFA_Admin {
         }
         ?>
         <div class="wrap">
-            <h1 class="wp-heading-inline"><?php _e('Inscripcions', 'cfa-inscripcions'); ?></h1>
+            <h1><?php _e('Inscripcions', 'cfa-inscripcions'); ?></h1>
 
             <!-- Filtres per estat -->
             <ul class="subsubsub">
