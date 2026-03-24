@@ -200,8 +200,8 @@ class CFA_Inscripcions_DB {
         // Convertir columna estat de ENUM a VARCHAR (dbDelta no ho fa automàticament)
         $wpdb->query("ALTER TABLE $table_inscripcions MODIFY COLUMN estat varchar(20) DEFAULT 'pendent'");
 
-        // Afegir UNIQUE constraint per evitar duplicats DNI+curs (ignorar error si ja existeix)
-        $wpdb->query("ALTER TABLE $table_inscripcions ADD UNIQUE KEY curs_dni (curs_id, dni)");
+        // UNIQUE KEY curs_dni ja es crea al CREATE TABLE via dbDelta (línia superior).
+        // No cal afegir-la de nou amb ALTER TABLE.
 
         // Guardar versió de la BD
         update_option('cfa_inscripcions_db_version', '1.2.1');
