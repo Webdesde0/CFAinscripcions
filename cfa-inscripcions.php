@@ -164,9 +164,16 @@ class CFA_Inscripcions {
     }
 
     /**
-     * Enqueue assets públics
+     * Enqueue assets públics (només a pàgines amb el shortcode)
      */
     public function enqueue_public_assets() {
+        global $post;
+
+        // Només carregar assets a pàgines que contenen el shortcode
+        if (!is_a($post, 'WP_Post') || !has_shortcode($post->post_content, 'cfa_inscripcio')) {
+            return;
+        }
+
         wp_enqueue_style(
             'cfa-inscripcions-public',
             CFA_INSCRIPCIONS_PLUGIN_URL . 'assets/css/public.css',

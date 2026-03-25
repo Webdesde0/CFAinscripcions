@@ -21,7 +21,8 @@ class CFA_Emails {
     }
 
     private function __construct() {
-        add_filter('wp_mail_content_type', array($this, 'set_html_content_type'));
+        // El filtre wp_mail_content_type s'aplica només al moment d'enviar,
+        // no de forma global, per evitar conflictes amb altres plugins.
     }
 
     /**
@@ -29,6 +30,18 @@ class CFA_Emails {
      */
     public function set_html_content_type() {
         return 'text/html';
+    }
+
+    /**
+     * Enviar email HTML de forma segura, aplicant i eliminant el filtre
+     * wp_mail_content_type només durant l'enviament.
+     */
+    private static function send_html_email($to, $subject, $message, $headers = array()) {
+        $instance = self::get_instance();
+        add_filter('wp_mail_content_type', array($instance, 'set_html_content_type'));
+        $result = wp_mail($to, $subject, $message, $headers);
+        remove_filter('wp_mail_content_type', array($instance, 'set_html_content_type'));
+        return $result;
     }
 
     /**
@@ -255,7 +268,7 @@ class CFA_Emails {
 
         $html = self::get_email_template($contingut, $assumpte);
 
-        return wp_mail($admin_email, $assumpte, $html);
+        return self::send_html_email($admin_email, $assumpte, $html);
     }
 
     /**
@@ -293,7 +306,7 @@ class CFA_Emails {
 
         $html = self::get_email_template($contingut, $assumpte);
 
-        return wp_mail($inscripcio->email, $assumpte, $html);
+        return self::send_html_email($inscripcio->email, $assumpte, $html);
     }
 
     /**
@@ -335,7 +348,7 @@ class CFA_Emails {
 
         $html = self::get_email_template($contingut, $assumpte);
 
-        return wp_mail($inscripcio->email, $assumpte, $html);
+        return self::send_html_email($inscripcio->email, $assumpte, $html);
     }
 
     /**
@@ -373,6 +386,6 @@ class CFA_Emails {
 
         $html = self::get_email_template($contingut, $assumpte);
 
-        return wp_mail($inscripcio->email, $assumpte, $html);
+        return self::send_html_email($inscripcio->email, $assumpte, $html);
     }
 }

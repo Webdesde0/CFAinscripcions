@@ -57,8 +57,8 @@ class CFA_Admin {
         $id = isset($_POST['id']) ? absint($_POST['id']) : 0;
 
         $dades = array(
-            'nom' => sanitize_text_field($_POST['nom'] ?? ''),
-            'descripcio' => sanitize_textarea_field($_POST['descripcio'] ?? ''),
+            'nom' => sanitize_text_field(wp_unslash($_POST['nom'] ?? '')),
+            'descripcio' => sanitize_textarea_field(wp_unslash($_POST['descripcio'] ?? '')),
             'calendari_id' => !empty($_POST['calendari_id']) ? absint($_POST['calendari_id']) : null,
             'ordre' => absint($_POST['ordre'] ?? 0),
             'actiu' => isset($_POST['actiu']) ? 1 : 0,
@@ -850,7 +850,6 @@ class CFA_Admin {
                 <thead>
                     <tr>
                         <th scope="col"><?php _e('Nom', 'cfa-inscripcions'); ?></th>
-                        <th scope="col"><?php _e('Places/franja', 'cfa-inscripcions'); ?></th>
                         <th scope="col"><?php _e('Plaç màxim', 'cfa-inscripcions'); ?></th>
                         <th scope="col"><?php _e('Estat', 'cfa-inscripcions'); ?></th>
                         <th scope="col"><?php _e('Accions', 'cfa-inscripcions'); ?></th>
@@ -874,7 +873,6 @@ class CFA_Admin {
                                         <br><small><?php echo esc_html($cal->descripcio); ?></small>
                                     <?php endif; ?>
                                 </td>
-                                <td><?php echo esc_html($cal->places_per_franja); ?></td>
                                 <td><?php printf(__('%d dies', 'cfa-inscripcions'), $cal->plac_maxim_dies); ?></td>
                                 <td>
                                     <?php if ($cal->actiu) : ?>
@@ -910,8 +908,6 @@ class CFA_Admin {
         $calendari = $id ? CFA_Inscripcions_DB::obtenir_calendari($id) : null;
 
         $nom = $calendari ? $calendari->nom : '';
-        $descripcio = $calendari ? $calendari->descripcio : '';
-        $places = $calendari ? $calendari->places_per_franja : 1;
         $plac = $calendari ? $calendari->plac_maxim_dies : 90;
         $actiu = $calendari ? $calendari->actiu : 1;
         ?>
@@ -936,24 +932,6 @@ class CFA_Admin {
                             <input type="text" name="nom" id="nom" value="<?php echo esc_attr($nom); ?>"
                                    class="regular-text" required>
                             <p class="description"><?php _e('Ex: "Calendari general", "Horaris de català"', 'cfa-inscripcions'); ?></p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">
-                            <label for="descripcio"><?php _e('Descripció', 'cfa-inscripcions'); ?></label>
-                        </th>
-                        <td>
-                            <textarea name="descripcio" id="descripcio" rows="3" class="large-text"><?php echo esc_textarea($descripcio); ?></textarea>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">
-                            <label for="places_per_franja"><?php _e('Places per franja horària', 'cfa-inscripcions'); ?></label>
-                        </th>
-                        <td>
-                            <input type="number" name="places_per_franja" id="places_per_franja"
-                                   value="<?php echo esc_attr($places); ?>" min="1" max="100" class="small-text" required>
-                            <p class="description"><?php _e('Quantes persones poden reservar la mateixa franja horària.', 'cfa-inscripcions'); ?></p>
                         </td>
                     </tr>
                     <tr>
@@ -1240,9 +1218,6 @@ class CFA_Admin {
                             <div class="inside">
                                 <p><strong><?php _e('Calendari:', 'cfa-inscripcions'); ?></strong><br>
                                     <?php echo esc_html($calendari->nom); ?>
-                                </p>
-                                <p><strong><?php _e('Places per franja:', 'cfa-inscripcions'); ?></strong><br>
-                                    <?php echo esc_html($calendari->places_per_franja); ?>
                                 </p>
                                 <p><strong><?php _e('Plaç màxim:', 'cfa-inscripcions'); ?></strong><br>
                                     <?php printf(__('%d dies', 'cfa-inscripcions'), $calendari->plac_maxim_dies); ?>
@@ -1605,7 +1580,7 @@ class CFA_Admin {
      * Guardar configuració
      */
     private function guardar_configuracio() {
-        update_option('cfa_inscripcions_nom_centre', sanitize_text_field($_POST['cfa_nom_centre'] ?? ''));
+        update_option('cfa_inscripcions_nom_centre', sanitize_text_field(wp_unslash($_POST['cfa_nom_centre'] ?? '')));
         update_option('cfa_inscripcions_admin_email', sanitize_email($_POST['cfa_admin_email'] ?? ''));
         update_option('cfa_inscripcions_logo_url', esc_url_raw($_POST['cfa_logo_url'] ?? ''));
 
@@ -1659,7 +1634,7 @@ class CFA_Admin {
         }
 
         $id = isset($_POST['id']) ? absint($_POST['id']) : 0;
-        $motiu = isset($_POST['motiu']) ? sanitize_text_field($_POST['motiu']) : '';
+        $motiu = isset($_POST['motiu']) ? sanitize_text_field(wp_unslash($_POST['motiu'])) : '';
 
         $inscripcio = CFA_Inscripcions_DB::obtenir_inscripcio($id);
 
@@ -1730,17 +1705,17 @@ class CFA_Admin {
             'calendari_id' => $calendari_id,
             'data_cita' => sanitize_text_field($_POST['data_cita'] ?? ''),
             'hora_cita' => sanitize_text_field($_POST['hora_cita'] ?? ''),
-            'nom' => sanitize_text_field($_POST['nom'] ?? ''),
-            'cognoms' => sanitize_text_field($_POST['cognoms'] ?? ''),
-            'dni' => strtoupper(sanitize_text_field($_POST['dni'] ?? '')),
+            'nom' => sanitize_text_field(wp_unslash($_POST['nom'] ?? '')),
+            'cognoms' => sanitize_text_field(wp_unslash($_POST['cognoms'] ?? '')),
+            'dni' => strtoupper(sanitize_text_field(wp_unslash($_POST['dni'] ?? ''))),
             'data_naixement' => sanitize_text_field($_POST['data_naixement'] ?? ''),
             'telefon' => sanitize_text_field($_POST['telefon'] ?? ''),
             'email' => sanitize_email($_POST['email'] ?? ''),
-            'adreca' => sanitize_text_field($_POST['adreca'] ?? ''),
-            'poblacio' => sanitize_text_field($_POST['poblacio'] ?? ''),
+            'adreca' => sanitize_text_field(wp_unslash($_POST['adreca'] ?? '')),
+            'poblacio' => sanitize_text_field(wp_unslash($_POST['poblacio'] ?? '')),
             'codi_postal' => sanitize_text_field($_POST['codi_postal'] ?? ''),
-            'nivell_estudis' => sanitize_text_field($_POST['nivell_estudis'] ?? ''),
-            'observacions' => sanitize_textarea_field($_POST['observacions'] ?? ''),
+            'nivell_estudis' => sanitize_text_field(wp_unslash($_POST['nivell_estudis'] ?? '')),
+            'observacions' => sanitize_textarea_field(wp_unslash($_POST['observacions'] ?? '')),
             'estat' => sanitize_text_field($_POST['estat'] ?? 'pendent'),
         );
 
@@ -1769,9 +1744,7 @@ class CFA_Admin {
         $id = isset($_POST['id']) ? absint($_POST['id']) : 0;
 
         $dades = array(
-            'nom' => sanitize_text_field($_POST['nom'] ?? ''),
-            'descripcio' => sanitize_textarea_field($_POST['descripcio'] ?? ''),
-            'places_per_franja' => absint($_POST['places_per_franja'] ?? 1),
+            'nom' => sanitize_text_field(wp_unslash($_POST['nom'] ?? '')),
             'plac_maxim_dies' => absint($_POST['plac_maxim_dies'] ?? 90),
             'actiu' => isset($_POST['actiu']) ? 1 : 0,
         );
@@ -1887,7 +1860,7 @@ class CFA_Admin {
             'tipus' => isset($_POST['tipus']) ? sanitize_text_field($_POST['tipus']) : '',
             'hora_inici' => !empty($_POST['hora_inici']) ? sanitize_text_field($_POST['hora_inici']) : null,
             'hora_fi' => !empty($_POST['hora_fi']) ? sanitize_text_field($_POST['hora_fi']) : null,
-            'motiu' => isset($_POST['motiu']) ? sanitize_text_field($_POST['motiu']) : '',
+            'motiu' => isset($_POST['motiu']) ? sanitize_text_field(wp_unslash($_POST['motiu'])) : '',
         );
 
         if (!$dades['calendari_id'] || !$dades['data'] || !$dades['tipus']) {

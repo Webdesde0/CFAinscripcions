@@ -200,8 +200,8 @@ class CFA_Inscripcions_DB {
         // Convertir columna estat de ENUM a VARCHAR (dbDelta no ho fa automàticament)
         $wpdb->query("ALTER TABLE $table_inscripcions MODIFY COLUMN estat varchar(20) DEFAULT 'pendent'");
 
-        // Afegir UNIQUE constraint per evitar duplicats DNI+curs (ignorar error si ja existeix)
-        $wpdb->query("ALTER TABLE $table_inscripcions ADD UNIQUE KEY curs_dni (curs_id, dni)");
+        // UNIQUE KEY curs_dni ja es crea al CREATE TABLE via dbDelta (línia superior).
+        // No cal afegir-la de nou amb ALTER TABLE.
 
         // Guardar versió de la BD
         update_option('cfa_inscripcions_db_version', '1.2.1');
@@ -589,10 +589,15 @@ class CFA_Inscripcions_DB {
 
         $dades = wp_parse_args($dades, $defaults);
 
+        $format = array();
+        foreach ($dades as $key => $value) {
+            $format[] = in_array($key, array('nom', 'descripcio'), true) ? '%s' : '%d';
+        }
+
         $result = $wpdb->insert(
             self::$table_calendaris,
             $dades,
-            array('%s', '%s', '%d', '%d', '%d')
+            $format
         );
 
         if ($result) {
@@ -639,11 +644,16 @@ class CFA_Inscripcions_DB {
     public static function actualitzar_calendari($id, $dades) {
         global $wpdb;
 
+        $format = array();
+        foreach ($dades as $key => $value) {
+            $format[] = in_array($key, array('nom', 'descripcio'), true) ? '%s' : '%d';
+        }
+
         return $wpdb->update(
             self::$table_calendaris,
             $dades,
             array('id' => $id),
-            array('%s', '%s', '%d', '%d', '%d'),
+            $format,
             array('%d')
         );
     }
@@ -1089,6 +1099,59 @@ class CFA_Inscripcions_DB {
     }
 
     /**
+     * Comprovar si un professor ja té una reserva a qualsevol calendari per una data/hora.
+     * Retorna true si el professor està ocupat (té reserves a altres calendaris).
+     */
+    public static function professor_ocupat($professor_id, $data, $hora, $calendari_id_excloure = null) {
+        global $wpdb;
+
+        if (empty($professor_id)) {
+            return false;
+        }
+
+        // Trobar tots els calendaris que tenen aquest professor en un horari que cobreix aquesta hora i dia de la setmana
+        $dia_setmana = date('N', strtotime($data));
+
+        $calendaris_professor = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT DISTINCT calendari_id FROM " . self::$table_horaris . "
+                WHERE professor_id = %d AND dia_setmana = %d AND actiu = 1
+                AND hora_inici <= %s AND hora_fi > %s",
+                $professor_id, $dia_setmana, $hora, $hora
+            )
+        );
+
+        if (empty($calendaris_professor)) {
+            return false;
+        }
+
+        // Excloure el calendari actual si cal
+        if ($calendari_id_excloure) {
+            $calendaris_professor = array_filter($calendaris_professor, function($cid) use ($calendari_id_excloure) {
+                return (int) $cid !== (int) $calendari_id_excloure;
+            });
+        }
+
+        if (empty($calendaris_professor)) {
+            return false;
+        }
+
+        // Comprovar si hi ha reserves a qualsevol d'aquests calendaris per aquesta data/hora
+        $placeholders = implode(',', array_fill(0, count($calendaris_professor), '%d'));
+        $params = array_merge($calendaris_professor, array($data, $hora));
+
+        $count = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM " . self::$table_reserves . "
+                WHERE calendari_id IN ($placeholders) AND data = %s AND hora = %s",
+                $params
+            )
+        );
+
+        return $count > 0;
+    }
+
+    /**
      * Obtenir reserves per data
      */
     public static function obtenir_reserves_per_data($calendari_id, $data) {
@@ -1139,11 +1202,43 @@ class CFA_Inscripcions_DB {
     }
 
     /**
-     * Comprovar si una franja de 15 minuts té places disponibles
+     * Comprovar si una franja de 15 minuts té places disponibles.
+     * Comprova reserves del calendari actual + si el professor està ocupat en un altre calendari.
      */
     public static function te_places_disponibles($calendari_id, $data, $hora) {
+        // Comprovar reserves directes al calendari
         $reserves = self::comptar_reserves($calendari_id, $data, $hora);
-        return $reserves < 1;
+        if ($reserves >= 1) {
+            return false;
+        }
+
+        // Comprovar si el professor d'aquesta franja està ocupat en un altre calendari
+        $professor_id = self::obtenir_professor_per_franja($calendari_id, $data, $hora);
+        if ($professor_id && self::professor_ocupat($professor_id, $data, $hora, $calendari_id)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Obtenir el professor_id assignat a una franja horària concreta d'un calendari.
+     */
+    public static function obtenir_professor_per_franja($calendari_id, $data, $hora) {
+        global $wpdb;
+
+        $dia_setmana = date('N', strtotime($data));
+
+        return $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT professor_id FROM " . self::$table_horaris . "
+                WHERE calendari_id = %d AND dia_setmana = %d AND actiu = 1
+                AND hora_inici <= %s AND hora_fi > %s
+                AND professor_id IS NOT NULL AND professor_id > 0
+                LIMIT 1",
+                $calendari_id, $dia_setmana, $hora, $hora
+            )
+        );
     }
 
     /**
@@ -1208,20 +1303,29 @@ class CFA_Inscripcions_DB {
 
             $start = strtotime($horari->hora_inici);
             $end = strtotime($horari->hora_fi);
+            $prof_id = isset($horari->professor_id) ? $horari->professor_id : null;
 
             while ($start < $end) {
                 $slot_hora = date('H:i:s', $start);
                 $slot_hora_fi = date('H:i:s', $start + 900);
 
                 $reserves = self::comptar_reserves($calendari_id, $data, $slot_hora);
+                $disponible = ($reserves < 1);
 
-                if ($reserves < 1) {
+                // Comprovar si el professor està ocupat en un altre calendari
+                if ($disponible && $prof_id) {
+                    if (self::professor_ocupat($prof_id, $data, $slot_hora, $calendari_id)) {
+                        $disponible = false;
+                    }
+                }
+
+                if ($disponible) {
                     $franges[] = array(
                         'hora_inici' => $slot_hora,
                         'hora_fi' => $slot_hora_fi,
                         'places_disponibles' => 1,
                         'places_totals' => 1,
-                        'professor_id' => isset($horari->professor_id) ? $horari->professor_id : null,
+                        'professor_id' => $prof_id,
                     );
                 }
 
@@ -1233,20 +1337,29 @@ class CFA_Inscripcions_DB {
         foreach ($horaris_extres as $extra) {
             $start = strtotime($extra->hora_inici);
             $end = strtotime($extra->hora_fi);
+            $prof_id = isset($extra->professor_id) ? $extra->professor_id : null;
 
             while ($start < $end) {
                 $slot_hora = date('H:i:s', $start);
                 $slot_hora_fi = date('H:i:s', $start + 900);
 
                 $reserves = self::comptar_reserves($calendari_id, $data, $slot_hora);
+                $disponible = ($reserves < 1);
 
-                if ($reserves < 1) {
+                // Comprovar si el professor està ocupat en un altre calendari
+                if ($disponible && $prof_id) {
+                    if (self::professor_ocupat($prof_id, $data, $slot_hora, $calendari_id)) {
+                        $disponible = false;
+                    }
+                }
+
+                if ($disponible) {
                     $franges[] = array(
                         'hora_inici' => $slot_hora,
                         'hora_fi' => $slot_hora_fi,
                         'places_disponibles' => 1,
                         'places_totals' => 1,
-                        'professor_id' => null,
+                        'professor_id' => $prof_id,
                     );
                 }
 
