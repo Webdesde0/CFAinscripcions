@@ -910,7 +910,6 @@ class CFA_Admin {
         $calendari = $id ? CFA_Inscripcions_DB::obtenir_calendari($id) : null;
 
         $nom = $calendari ? $calendari->nom : '';
-        $descripcio = $calendari ? $calendari->descripcio : '';
         $places = $calendari ? $calendari->places_per_franja : 1;
         $plac = $calendari ? $calendari->plac_maxim_dies : 90;
         $actiu = $calendari ? $calendari->actiu : 1;
@@ -936,14 +935,6 @@ class CFA_Admin {
                             <input type="text" name="nom" id="nom" value="<?php echo esc_attr($nom); ?>"
                                    class="regular-text" required>
                             <p class="description"><?php _e('Ex: "Calendari general", "Horaris de català"', 'cfa-inscripcions'); ?></p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">
-                            <label for="descripcio"><?php _e('Descripció', 'cfa-inscripcions'); ?></label>
-                        </th>
-                        <td>
-                            <textarea name="descripcio" id="descripcio" rows="3" class="large-text"><?php echo esc_textarea($descripcio); ?></textarea>
                         </td>
                     </tr>
                     <tr>
@@ -1770,7 +1761,6 @@ class CFA_Admin {
 
         $dades = array(
             'nom' => sanitize_text_field(wp_unslash($_POST['nom'] ?? '')),
-            'descripcio' => sanitize_textarea_field(wp_unslash($_POST['descripcio'] ?? '')),
             'places_per_franja' => absint($_POST['places_per_franja'] ?? 1),
             'plac_maxim_dies' => absint($_POST['plac_maxim_dies'] ?? 90),
             'actiu' => isset($_POST['actiu']) ? 1 : 0,
