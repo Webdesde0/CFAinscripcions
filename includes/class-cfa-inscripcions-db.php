@@ -589,10 +589,15 @@ class CFA_Inscripcions_DB {
 
         $dades = wp_parse_args($dades, $defaults);
 
+        $format = array();
+        foreach ($dades as $key => $value) {
+            $format[] = in_array($key, array('nom', 'descripcio'), true) ? '%s' : '%d';
+        }
+
         $result = $wpdb->insert(
             self::$table_calendaris,
             $dades,
-            array('%s', '%s', '%d', '%d', '%d')
+            $format
         );
 
         if ($result) {
@@ -639,11 +644,16 @@ class CFA_Inscripcions_DB {
     public static function actualitzar_calendari($id, $dades) {
         global $wpdb;
 
+        $format = array();
+        foreach ($dades as $key => $value) {
+            $format[] = in_array($key, array('nom', 'descripcio'), true) ? '%s' : '%d';
+        }
+
         return $wpdb->update(
             self::$table_calendaris,
             $dades,
             array('id' => $id),
-            array('%s', '%s', '%d', '%d', '%d'),
+            $format,
             array('%d')
         );
     }
