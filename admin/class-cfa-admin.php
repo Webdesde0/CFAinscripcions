@@ -850,7 +850,6 @@ class CFA_Admin {
                 <thead>
                     <tr>
                         <th scope="col"><?php _e('Nom', 'cfa-inscripcions'); ?></th>
-                        <th scope="col"><?php _e('Places/franja', 'cfa-inscripcions'); ?></th>
                         <th scope="col"><?php _e('Plaç màxim', 'cfa-inscripcions'); ?></th>
                         <th scope="col"><?php _e('Estat', 'cfa-inscripcions'); ?></th>
                         <th scope="col"><?php _e('Accions', 'cfa-inscripcions'); ?></th>
@@ -874,7 +873,6 @@ class CFA_Admin {
                                         <br><small><?php echo esc_html($cal->descripcio); ?></small>
                                     <?php endif; ?>
                                 </td>
-                                <td><?php echo esc_html($cal->places_per_franja); ?></td>
                                 <td><?php printf(__('%d dies', 'cfa-inscripcions'), $cal->plac_maxim_dies); ?></td>
                                 <td>
                                     <?php if ($cal->actiu) : ?>
@@ -910,7 +908,6 @@ class CFA_Admin {
         $calendari = $id ? CFA_Inscripcions_DB::obtenir_calendari($id) : null;
 
         $nom = $calendari ? $calendari->nom : '';
-        $places = $calendari ? $calendari->places_per_franja : 1;
         $plac = $calendari ? $calendari->plac_maxim_dies : 90;
         $actiu = $calendari ? $calendari->actiu : 1;
         ?>
@@ -935,16 +932,6 @@ class CFA_Admin {
                             <input type="text" name="nom" id="nom" value="<?php echo esc_attr($nom); ?>"
                                    class="regular-text" required>
                             <p class="description"><?php _e('Ex: "Calendari general", "Horaris de català"', 'cfa-inscripcions'); ?></p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">
-                            <label for="places_per_franja"><?php _e('Places per franja horària', 'cfa-inscripcions'); ?></label>
-                        </th>
-                        <td>
-                            <input type="number" name="places_per_franja" id="places_per_franja"
-                                   value="<?php echo esc_attr($places); ?>" min="1" max="100" class="small-text" required>
-                            <p class="description"><?php _e('Quantes persones poden reservar la mateixa franja horària.', 'cfa-inscripcions'); ?></p>
                         </td>
                     </tr>
                     <tr>
@@ -1231,9 +1218,6 @@ class CFA_Admin {
                             <div class="inside">
                                 <p><strong><?php _e('Calendari:', 'cfa-inscripcions'); ?></strong><br>
                                     <?php echo esc_html($calendari->nom); ?>
-                                </p>
-                                <p><strong><?php _e('Places per franja:', 'cfa-inscripcions'); ?></strong><br>
-                                    <?php echo esc_html($calendari->places_per_franja); ?>
                                 </p>
                                 <p><strong><?php _e('Plaç màxim:', 'cfa-inscripcions'); ?></strong><br>
                                     <?php printf(__('%d dies', 'cfa-inscripcions'), $calendari->plac_maxim_dies); ?>
@@ -1761,7 +1745,6 @@ class CFA_Admin {
 
         $dades = array(
             'nom' => sanitize_text_field(wp_unslash($_POST['nom'] ?? '')),
-            'places_per_franja' => absint($_POST['places_per_franja'] ?? 1),
             'plac_maxim_dies' => absint($_POST['plac_maxim_dies'] ?? 90),
             'actiu' => isset($_POST['actiu']) ? 1 : 0,
         );
