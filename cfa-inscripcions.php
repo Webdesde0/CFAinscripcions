@@ -137,7 +137,7 @@ class CFA_Inscripcions {
     public function init() {
         // Comprovar si cal actualitzar la BD
         $current_db_version = get_option('cfa_inscripcions_db_version', '0');
-        if (version_compare($current_db_version, '1.2.1', '<')) {
+        if (version_compare($current_db_version, '1.2.2', '<')) {
             CFA_Inscripcions_DB::create_tables();
         }
 
