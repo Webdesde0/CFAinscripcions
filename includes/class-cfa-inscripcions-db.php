@@ -78,8 +78,7 @@ class CFA_Inscripcions_DB {
             KEY curs_id (curs_id),
             KEY calendari_id (calendari_id),
             KEY estat (estat),
-            KEY data_cita (data_cita),
-            UNIQUE KEY curs_dni (curs_id, dni)
+            KEY data_cita (data_cita)
         ) $charset_collate;";
 
         dbDelta($sql_inscripcions);
@@ -200,11 +199,14 @@ class CFA_Inscripcions_DB {
         // Convertir columna estat de ENUM a VARCHAR (dbDelta no ho fa automàticament)
         $wpdb->query("ALTER TABLE $table_inscripcions MODIFY COLUMN estat varchar(20) DEFAULT 'pendent'");
 
-        // UNIQUE KEY curs_dni ja es crea al CREATE TABLE via dbDelta (línia superior).
-        // No cal afegir-la de nou amb ALTER TABLE.
+        // Eliminar UNIQUE KEY curs_dni per permetre reinscripcions quan l'anterior està cancel·lada o no presentat
+        $index_exists = $wpdb->get_var("SHOW INDEX FROM $table_inscripcions WHERE Key_name = 'curs_dni'");
+        if ($index_exists) {
+            $wpdb->query("ALTER TABLE $table_inscripcions DROP INDEX curs_dni");
+        }
 
         // Guardar versió de la BD
-        update_option('cfa_inscripcions_db_version', '1.2.1');
+        update_option('cfa_inscripcions_db_version', '1.2.2');
     }
 
     /**
@@ -312,7 +314,7 @@ class CFA_Inscripcions_DB {
 
         $count = $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM " . self::$table_inscripcions . "
-             WHERE curs_id = %d AND dni = %s AND estat != 'cancel_lada'",
+             WHERE curs_id = %d AND dni = %s AND estat NOT IN ('cancel_lada', 'no_presentat')",
             $curs_id,
             strtoupper($dni)
         ));

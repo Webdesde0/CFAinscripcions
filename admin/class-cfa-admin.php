@@ -400,7 +400,7 @@ class CFA_Admin {
                                             <?php _e('Confirmar', 'cfa-inscripcions'); ?>
                                         </button>
                                     <?php endif; ?>
-                                    <?php if ($estat_actual !== 'cancel_lada') : ?>
+                                    <?php if (in_array($estat_actual, array('pendent', 'confirmada'))) : ?>
                                         <button type="button" class="button button-small cfa-btn-cancel-lar"
                                                 data-id="<?php echo esc_attr($inscripcio->id); ?>">
                                             <?php _e('Cancel·lar', 'cfa-inscripcions'); ?>
@@ -410,6 +410,12 @@ class CFA_Admin {
                                         <button type="button" class="button button-small cfa-btn-no-presentat"
                                                 data-id="<?php echo esc_attr($inscripcio->id); ?>">
                                             <?php _e('No presentat', 'cfa-inscripcions'); ?>
+                                        </button>
+                                    <?php endif; ?>
+                                    <?php if ($estat_actual === 'cancel_lada') : ?>
+                                        <button type="button" class="button button-small button-link-delete cfa-btn-eliminar"
+                                                data-id="<?php echo esc_attr($inscripcio->id); ?>">
+                                            <?php _e('Eliminar', 'cfa-inscripcions'); ?>
                                         </button>
                                     <?php endif; ?>
                                 </td>
@@ -585,7 +591,7 @@ class CFA_Admin {
                                         <?php _e('Editar inscripció', 'cfa-inscripcions'); ?>
                                     </a>
                                 </p>
-                                <?php if ($estat_actual !== 'cancel_lada') : ?>
+                                <?php if (in_array($estat_actual, array('pendent', 'confirmada'))) : ?>
                                     <p>
                                         <button type="button" class="button cfa-btn-cancel-lar"
                                                 data-id="<?php echo esc_attr($inscripcio->id); ?>" style="width:100%;">
@@ -598,6 +604,14 @@ class CFA_Admin {
                                         <button type="button" class="button cfa-btn-no-presentat"
                                                 data-id="<?php echo esc_attr($inscripcio->id); ?>" style="width:100%;">
                                             <?php _e('Marcar com a no presentat', 'cfa-inscripcions'); ?>
+                                        </button>
+                                    </p>
+                                <?php endif; ?>
+                                <?php if ($estat_actual === 'cancel_lada') : ?>
+                                    <p>
+                                        <button type="button" class="button button-link-delete cfa-btn-eliminar"
+                                                data-id="<?php echo esc_attr($inscripcio->id); ?>" style="width:100%;">
+                                            <?php _e('Eliminar inscripció', 'cfa-inscripcions'); ?>
                                         </button>
                                     </p>
                                 <?php endif; ?>
@@ -1669,6 +1683,9 @@ class CFA_Admin {
         }
 
         $id = isset($_POST['id']) ? absint($_POST['id']) : 0;
+
+        // Alliberar reserva associada abans d'eliminar
+        CFA_Inscripcions_DB::eliminar_reserva_per_inscripcio($id);
 
         $result = CFA_Inscripcions_DB::eliminar_inscripcio($id);
 
