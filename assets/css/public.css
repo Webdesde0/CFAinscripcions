@@ -100,7 +100,7 @@
 .cfa-pas-contingut h2 {
     margin: 0 0 10px;
     font-family: "Archia", Sans-serif;
-    font-size: 60px;
+    font-size: 32px;
     font-weight: 400;
     text-transform: uppercase;
     line-height: 1.2em;
@@ -574,16 +574,9 @@ button.cfa-boto.cfa-boto-secundari:hover,
 }
 
 /* Responsive */
-/* Tablet */
-@media (max-width: 1024px) {
-    .cfa-pas-contingut h2 {
-        font-size: 44px;
-    }
-}
-
 @media (max-width: 600px) {
     .cfa-pas-contingut h2 {
-        font-size: 32px;
+        font-size: 26px;
     }
 
     .cfa-pas-text {
