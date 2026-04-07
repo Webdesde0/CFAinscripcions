@@ -171,6 +171,16 @@ class CFA_Admin {
             'cfa-configuracio',
             array($this, 'render_page_configuracio')
         );
+
+        // Submenú ajuda - professors i admins
+        add_submenu_page(
+            'cfa-inscripcions',
+            __('Ajuda', 'cfa-inscripcions'),
+            __('Ajuda', 'cfa-inscripcions'),
+            'cfa_veure_inscripcions',
+            'cfa-ajuda',
+            array($this, 'render_page_ajuda')
+        );
     }
 
     /**
@@ -1631,6 +1641,180 @@ class CFA_Admin {
 
         add_settings_error('cfa_configuracio', 'settings_updated', __('Configuració guardada.', 'cfa-inscripcions'), 'success');
         settings_errors('cfa_configuracio');
+    }
+
+    // =========================================================================
+    // PÀGINA D'AJUDA
+    // =========================================================================
+
+    /**
+     * Renderitzar pàgina d'ajuda
+     */
+    public function render_page_ajuda() {
+        $es_admin = current_user_can('manage_options');
+        ?>
+        <div class="wrap">
+            <h1><?php _e('Guia d\'ús - CFA Inscripcions', 'cfa-inscripcions'); ?></h1>
+
+            <div class="cfa-ajuda-wrapper" style="max-width: 900px;">
+
+                <?php if ($es_admin) : ?>
+
+                <!-- SECCIÓ 1: Primers passos -->
+                <div class="card" style="max-width: 900px; margin-top: 20px;">
+                    <h2><?php _e('1. Primers passos (flux de configuració)', 'cfa-inscripcions'); ?></h2>
+                    <p><?php _e('Per configurar el plugin correctament, segueix aquest ordre:', 'cfa-inscripcions'); ?></p>
+
+                    <h3><?php _e('1.1 Crear professors', 'cfa-inscripcions'); ?></h3>
+                    <p><?php printf(
+                        __('Ves a %sUsuaris → Afegir nou%s i crea els usuaris amb el rol %sProfessor CFA%s. Aquests usuaris podran veure i gestionar les inscripcions dels seus cursos i horaris.', 'cfa-inscripcions'),
+                        '<strong>', '</strong>', '<strong>', '</strong>'
+                    ); ?></p>
+
+                    <h3><?php _e('1.2 Crear calendaris', 'cfa-inscripcions'); ?></h3>
+                    <p><?php printf(
+                        __('Ves a %sInscripcions → Calendaris → Afegir nou%s. Cada calendari defineix la disponibilitat horària. Configura:', 'cfa-inscripcions'),
+                        '<a href="' . admin_url('admin.php?page=cfa-calendaris&action=nou') . '">', '</a>'
+                    ); ?></p>
+                    <ul style="list-style: disc; margin-left: 20px;">
+                        <li><?php _e('<strong>Nom</strong>: Identifica el calendari (ex: "Català", "Anglès").', 'cfa-inscripcions'); ?></li>
+                        <li><?php _e('<strong>Plaç màxim de reserva</strong>: Fins a quants dies en el futur es pot reservar.', 'cfa-inscripcions'); ?></li>
+                    </ul>
+
+                    <h3><?php _e('1.3 Configurar horaris', 'cfa-inscripcions'); ?></h3>
+                    <p><?php _e('Dins de cada calendari, clica <strong>Horaris</strong> per afegir les franges setmanals recurrents. Per cada franja indica:', 'cfa-inscripcions'); ?></p>
+                    <ul style="list-style: disc; margin-left: 20px;">
+                        <li><?php _e('<strong>Dia de la setmana</strong> (dilluns a diumenge).', 'cfa-inscripcions'); ?></li>
+                        <li><?php _e('<strong>Hora inici i hora fi</strong> (ex: 09:30 - 10:30). El sistema dividirà automàticament en intervals de 15 minuts.', 'cfa-inscripcions'); ?></li>
+                        <li><?php _e('<strong>Professor</strong>: El professor que atendrà aquesta franja.', 'cfa-inscripcions'); ?></li>
+                    </ul>
+
+                    <h3><?php _e('1.4 Crear cursos', 'cfa-inscripcions'); ?></h3>
+                    <p><?php printf(
+                        __('Ves a %sInscripcions → Cursos → Afegir nou%s. Per cada curs configura:', 'cfa-inscripcions'),
+                        '<a href="' . admin_url('admin.php?page=cfa-cursos&action=nou') . '">', '</a>'
+                    ); ?></p>
+                    <ul style="list-style: disc; margin-left: 20px;">
+                        <li><?php _e('<strong>Nom i descripció</strong>: Visibles al formulari públic.', 'cfa-inscripcions'); ?></li>
+                        <li><?php _e('<strong>Calendari</strong>: Assigna el calendari amb els horaris corresponents.', 'cfa-inscripcions'); ?></li>
+                        <li><?php _e('<strong>Professors</strong>: Assigna els professors que imparteixen el curs.', 'cfa-inscripcions'); ?></li>
+                        <li><?php _e('<strong>Ordre</strong>: Posició al formulari públic (0 = primer).', 'cfa-inscripcions'); ?></li>
+                    </ul>
+                </div>
+
+                <!-- SECCIÓ 2: Formulari públic -->
+                <div class="card" style="max-width: 900px;">
+                    <h2><?php _e('2. Formulari públic', 'cfa-inscripcions'); ?></h2>
+
+                    <h3><?php _e('Shortcode', 'cfa-inscripcions'); ?></h3>
+                    <p><?php _e('Per mostrar el formulari d\'inscripció, afegeix el següent shortcode a una pàgina:', 'cfa-inscripcions'); ?></p>
+                    <p><code>[cfa_inscripcio]</code></p>
+                    <p><?php _e('Pots preseleccionar un curs amb:', 'cfa-inscripcions'); ?> <code>[cfa_inscripcio curs="1"]</code></p>
+
+                    <h3><?php _e('El procés d\'inscripció', 'cfa-inscripcions'); ?></h3>
+                    <p><?php _e('L\'alumne segueix 3 passos:', 'cfa-inscripcions'); ?></p>
+                    <ol>
+                        <li><?php _e('<strong>Selecció de curs</strong>: Tria entre els cursos actius.', 'cfa-inscripcions'); ?></li>
+                        <li><?php _e('<strong>Data i hora</strong>: Un calendari interactiu mostra els dies disponibles. En seleccionar un dia, es mostren les franges de 15 minuts lliures.', 'cfa-inscripcions'); ?></li>
+                        <li><?php _e('<strong>Dades personals</strong>: Nom, cognoms, DNI/NIE (amb validació), telèfon i email. El DNI es valida amb la lletra de control.', 'cfa-inscripcions'); ?></li>
+                    </ol>
+
+                    <h3><?php _e('Mode inscripcions tancades', 'cfa-inscripcions'); ?></h3>
+                    <p><?php printf(
+                        __('Quan les inscripcions no estan obertes, activa el mode tancat des de %sConfiguració%s. El formulari se substituirà pel missatge configurat.', 'cfa-inscripcions'),
+                        '<a href="' . admin_url('admin.php?page=cfa-configuracio') . '">', '</a>'
+                    ); ?></p>
+                </div>
+
+                <?php endif; ?>
+
+                <!-- SECCIÓ 3: Gestió d'inscripcions (visible per professors i admins) -->
+                <div class="card" style="max-width: 900px; <?php echo $es_admin ? '' : 'margin-top: 20px;'; ?>">
+                    <h2><?php _e('Gestió d\'inscripcions', 'cfa-inscripcions'); ?></h2>
+
+                    <?php if (!$es_admin) : ?>
+                        <p><?php _e('Com a professor, veuràs les inscripcions dels cursos i horaris que tens assignats.', 'cfa-inscripcions'); ?></p>
+                    <?php endif; ?>
+
+                    <h3><?php _e('Estats d\'una inscripció', 'cfa-inscripcions'); ?></h3>
+                    <table class="widefat" style="max-width: 700px;">
+                        <thead>
+                            <tr>
+                                <th><?php _e('Estat', 'cfa-inscripcions'); ?></th>
+                                <th><?php _e('Descripció', 'cfa-inscripcions'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="cfa-badge cfa-badge-warning"><?php _e('Pendent', 'cfa-inscripcions'); ?></span></td>
+                                <td><?php _e('Nova inscripció pendent de revisió.', 'cfa-inscripcions'); ?></td>
+                            </tr>
+                            <tr>
+                                <td><span class="cfa-badge cfa-badge-success"><?php _e('Confirmada', 'cfa-inscripcions'); ?></span></td>
+                                <td><?php _e('Inscripció confirmada. S\'envia email de confirmació de cita a l\'alumne.', 'cfa-inscripcions'); ?></td>
+                            </tr>
+                            <tr>
+                                <td><span class="cfa-badge cfa-badge-error"><?php _e('Cancel·lada', 'cfa-inscripcions'); ?></span></td>
+                                <td><?php _e('Inscripció cancel·lada. S\'envia email amb el motiu. L\'alumne pot tornar a inscriure\'s.', 'cfa-inscripcions'); ?></td>
+                            </tr>
+                            <tr>
+                                <td><span class="cfa-badge cfa-badge-secondary"><?php _e('No presentat', 'cfa-inscripcions'); ?></span></td>
+                                <td><?php _e('L\'alumne no s\'ha presentat a la cita. Pot tornar a inscriure\'s.', 'cfa-inscripcions'); ?></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3 style="margin-top: 20px;"><?php _e('Accions disponibles', 'cfa-inscripcions'); ?></h3>
+                    <ul style="list-style: disc; margin-left: 20px;">
+                        <li><?php _e('<strong>Confirmar</strong>: Canvia l\'estat a confirmada i envia email de confirmació de cita.', 'cfa-inscripcions'); ?></li>
+                        <li><?php _e('<strong>Cancel·lar</strong>: Demana un motiu opcional i envia email de cancel·lació a l\'alumne.', 'cfa-inscripcions'); ?></li>
+                        <li><?php _e('<strong>No presentat</strong>: Marca que l\'alumne no ha vingut (només per inscripcions confirmades).', 'cfa-inscripcions'); ?></li>
+                        <li><?php _e('<strong>Eliminar</strong>: Esborra la inscripció permanentment (només per cancel·lades).', 'cfa-inscripcions'); ?></li>
+                        <li><?php _e('<strong>Editar</strong>: Permet modificar les dades de la inscripció.', 'cfa-inscripcions'); ?></li>
+                    </ul>
+                </div>
+
+                <?php if ($es_admin) : ?>
+
+                <!-- SECCIÓ 4: Sistema de reserves -->
+                <div class="card" style="max-width: 900px;">
+                    <h2><?php _e('Com funciona el sistema de reserves', 'cfa-inscripcions'); ?></h2>
+
+                    <h3><?php _e('Intervals de 15 minuts', 'cfa-inscripcions'); ?></h3>
+                    <p><?php _e('Cada horari configurat (ex: 09:30 - 10:30) es divideix automàticament en intervals de 15 minuts. Cada interval admet 1 alumne. Per tant, un horari d\'1 hora permet 4 inscripcions.', 'cfa-inscripcions'); ?></p>
+
+                    <h3><?php _e('Bloqueig creuat per professor', 'cfa-inscripcions'); ?></h3>
+                    <p><?php _e('Si un professor té el mateix horari assignat a diversos cursos (ex: Català, Castellà i FI), quan un alumne reserva una franja en un curs, aquesta franja queda automàticament bloquejada als altres cursos. Així s\'evita que el professor tingui dues cites simultànies.', 'cfa-inscripcions'); ?></p>
+
+                    <h3><?php _e('Excepcions', 'cfa-inscripcions'); ?></h3>
+                    <p><?php _e('Des de la pàgina d\'horaris de cada calendari, pots gestionar excepcions puntuals:', 'cfa-inscripcions'); ?></p>
+                    <ul style="list-style: disc; margin-left: 20px;">
+                        <li><?php _e('<strong>Cancel·lar un dia sencer</strong>: Totes les franges d\'aquell dia desapareixen (festius, vacances...).', 'cfa-inscripcions'); ?></li>
+                        <li><?php _e('<strong>Cancel·lar una franja</strong>: Anul·la una franja concreta d\'un dia.', 'cfa-inscripcions'); ?></li>
+                        <li><?php _e('<strong>Afegir horari extra</strong>: Crea franges addicionals en un dia concret.', 'cfa-inscripcions'); ?></li>
+                    </ul>
+                </div>
+
+                <!-- SECCIÓ 5: Configuració -->
+                <div class="card" style="max-width: 900px;">
+                    <h2><?php _e('5. Configuració', 'cfa-inscripcions'); ?></h2>
+                    <p><?php printf(
+                        __('Accedeix a la %spàgina de configuració%s per ajustar:', 'cfa-inscripcions'),
+                        '<a href="' . admin_url('admin.php?page=cfa-configuracio') . '">', '</a>'
+                    ); ?></p>
+                    <ul style="list-style: disc; margin-left: 20px;">
+                        <li><?php _e('<strong>Nom del centre</strong>: Apareix als emails enviats als alumnes.', 'cfa-inscripcions'); ?></li>
+                        <li><?php _e('<strong>Email de notificacions</strong>: On s\'envien les alertes de noves inscripcions.', 'cfa-inscripcions'); ?></li>
+                        <li><?php _e('<strong>Logo</strong>: Imatge que apareix a la capçalera dels emails.', 'cfa-inscripcions'); ?></li>
+                        <li><?php _e('<strong>Mode inscripcions tancades</strong>: Activa/desactiva el formulari i configura el missatge.', 'cfa-inscripcions'); ?></li>
+                    </ul>
+                </div>
+
+                <?php endif; ?>
+
+            </div>
+        </div>
+        <?php
     }
 
     // =========================================================================
