@@ -1661,7 +1661,7 @@ class CFA_Admin {
                 <?php if ($es_admin) : ?>
 
                 <!-- SECCIÓ 1: Primers passos -->
-                <div class="card" style="max-width: 100%; margin-top: 20px;">
+                <div class="postbox" style="padding: 15px 20px; margin-top: 20px;">
                     <h2><?php _e('1. Primers passos (flux de configuració)', 'cfa-inscripcions'); ?></h2>
                     <p><?php _e('Per configurar el plugin correctament, segueix aquest ordre:', 'cfa-inscripcions'); ?></p>
 
@@ -1703,7 +1703,7 @@ class CFA_Admin {
                 </div>
 
                 <!-- SECCIÓ 2: Formulari públic -->
-                <div class="card" style="max-width: 100%;">
+                <div class="postbox" style="padding: 15px 20px;">
                     <h2><?php _e('2. Formulari públic', 'cfa-inscripcions'); ?></h2>
 
                     <h3><?php _e('Shortcode', 'cfa-inscripcions'); ?></h3>
@@ -1729,7 +1729,7 @@ class CFA_Admin {
                 <?php endif; ?>
 
                 <!-- SECCIÓ 3: Gestió d'inscripcions (visible per professors i admins) -->
-                <div class="card" style="max-width: 100%;<?php echo $es_admin ? '' : ' margin-top: 20px;'; ?>">
+                <div class="postbox" style="padding: 15px 20px;<?php echo $es_admin ? '' : ' margin-top: 20px;'; ?>">
                     <h2><?php _e('Gestió d\'inscripcions', 'cfa-inscripcions'); ?></h2>
 
                     <?php if (!$es_admin) : ?>
@@ -1777,7 +1777,7 @@ class CFA_Admin {
                 <?php if ($es_admin) : ?>
 
                 <!-- SECCIÓ 4: Sistema de reserves -->
-                <div class="card" style="max-width: 100%;">
+                <div class="postbox" style="padding: 15px 20px;">
                     <h2><?php _e('Com funciona el sistema de reserves', 'cfa-inscripcions'); ?></h2>
 
                     <h3><?php _e('Intervals de 15 minuts', 'cfa-inscripcions'); ?></h3>
@@ -1796,7 +1796,7 @@ class CFA_Admin {
                 </div>
 
                 <!-- SECCIÓ 5: Configuració -->
-                <div class="card" style="max-width: 100%;">
+                <div class="postbox" style="padding: 15px 20px;">
                     <h2><?php _e('5. Configuració', 'cfa-inscripcions'); ?></h2>
                     <p><?php printf(
                         __('Accedeix a la %spàgina de configuració%s per ajustar:', 'cfa-inscripcions'),
