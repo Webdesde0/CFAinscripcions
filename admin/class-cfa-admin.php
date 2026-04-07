@@ -234,10 +234,13 @@ class CFA_Admin {
             }
         }
 
+        $professor_horari_id = $es_professor ? get_current_user_id() : 0;
+
         $args = array(
             'estat' => $estat,
             'curs_id' => $curs_id,
             'curs_ids' => $curs_ids_professor, // Filtrar per cursos del professor
+            'professor_horari_id' => $professor_horari_id, // Filtrar per horaris del professor
             'cerca' => $cerca,
             'limit' => $per_pagina,
             'offset' => ($pag - 1) * $per_pagina,
@@ -248,7 +251,7 @@ class CFA_Admin {
         $total_pagines = ceil($total / $per_pagina);
 
         // Comptadors per estat (amb filtre de professor si cal)
-        $args_comptador = array('curs_ids' => $curs_ids_professor);
+        $args_comptador = array('curs_ids' => $curs_ids_professor, 'professor_horari_id' => $professor_horari_id);
         $total_pendents = CFA_Inscripcions_DB::comptar_inscripcions(array_merge($args_comptador, array('estat' => 'pendent')));
         $total_confirmades = CFA_Inscripcions_DB::comptar_inscripcions(array_merge($args_comptador, array('estat' => 'confirmada')));
         $total_cancel_lades = CFA_Inscripcions_DB::comptar_inscripcions(array_merge($args_comptador, array('estat' => 'cancel_lada')));
@@ -1567,6 +1570,32 @@ class CFA_Admin {
                     </tr>
                 </table>
 
+                <h2><?php _e('Inscripcions tancades', 'cfa-inscripcions'); ?></h2>
+                <table class="form-table">
+                    <tr>
+                        <th scope="row"><?php _e('Mode tancat', 'cfa-inscripcions'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="cfa_inscripcions_tancades" value="1"
+                                    <?php checked(get_option('cfa_inscripcions_tancades', 0), 1); ?>>
+                                <?php _e('Activar mode inscripcions tancades', 'cfa-inscripcions'); ?>
+                            </label>
+                            <p class="description"><?php _e('Quan estigui activat, el formulari d\'inscripció no es mostrarà i apareixerà el missatge configurat a sota.', 'cfa-inscripcions'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="cfa_text_tancat"><?php _e('Missatge inscripcions tancades', 'cfa-inscripcions'); ?></label>
+                        </th>
+                        <td>
+                            <textarea name="cfa_text_tancat" id="cfa_text_tancat" rows="4" class="large-text"><?php
+                                echo esc_textarea(get_option('cfa_inscripcions_text_tancat', __('Les inscripcions estan tancades en aquest moment. Torneu a consultar més endavant.', 'cfa-inscripcions')));
+                            ?></textarea>
+                            <p class="description"><?php _e('Missatge que es mostrarà quan les inscripcions estiguin tancades.', 'cfa-inscripcions'); ?></p>
+                        </td>
+                    </tr>
+                </table>
+
                 <h2><?php _e('Shortcode', 'cfa-inscripcions'); ?></h2>
                 <table class="form-table">
                     <tr>
@@ -1597,6 +1626,8 @@ class CFA_Admin {
         update_option('cfa_inscripcions_nom_centre', sanitize_text_field(wp_unslash($_POST['cfa_nom_centre'] ?? '')));
         update_option('cfa_inscripcions_admin_email', sanitize_email($_POST['cfa_admin_email'] ?? ''));
         update_option('cfa_inscripcions_logo_url', esc_url_raw($_POST['cfa_logo_url'] ?? ''));
+        update_option('cfa_inscripcions_tancades', isset($_POST['cfa_inscripcions_tancades']) ? 1 : 0);
+        update_option('cfa_inscripcions_text_tancat', sanitize_textarea_field(wp_unslash($_POST['cfa_text_tancat'] ?? '')));
 
         add_settings_error('cfa_configuracio', 'settings_updated', __('Configuració guardada.', 'cfa-inscripcions'), 'success');
         settings_errors('cfa_configuracio');

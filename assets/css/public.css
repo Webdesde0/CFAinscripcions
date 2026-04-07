@@ -632,3 +632,31 @@ button.cfa-boto.cfa-boto-secundari:hover,
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
+/* Missatge d'inscripcions tancades */
+.cfa-inscripcions-tancades {
+    text-align: center;
+    padding: 60px 30px;
+    background: var(--cfa-bg);
+    border-radius: var(--cfa-radius);
+    border: 2px solid var(--cfa-border);
+}
+
+.cfa-inscripcions-tancades p {
+    font-family: "Archia", Sans-serif;
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 1.5em;
+    color: var(--cfa-text);
+    margin: 0;
+}
+
+@media (max-width: 600px) {
+    .cfa-inscripcions-tancades {
+        padding: 40px 20px;
+    }
+
+    .cfa-inscripcions-tancades p {
+        font-size: 18px;
+    }
+}

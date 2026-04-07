@@ -352,6 +352,7 @@ class CFA_Inscripcions_DB {
             'curs_id' => 0,
             'curs_ids' => array(), // Per filtrar per múltiples cursos (professors)
             'calendari_id' => 0,
+            'professor_horari_id' => 0, // Filtrar per horaris del professor
             'data_desde' => '',
             'data_fins' => '',
             'cerca' => '',
@@ -384,6 +385,18 @@ class CFA_Inscripcions_DB {
         } elseif (!empty($args['curs_id'])) {
             $where[] = 'curs_id = %d';
             $values[] = $args['curs_id'];
+        }
+
+        // Filtrar per horaris del professor (dia setmana + rang hores)
+        if (!empty($args['professor_horari_id'])) {
+            $horari_filter = self::generar_filtre_horari_professor($args['professor_horari_id']);
+            if ($horari_filter) {
+                $where[] = $horari_filter['sql'];
+                $values = array_merge($values, $horari_filter['values']);
+            } else {
+                // Professor sense horaris, no retornar res
+                $where[] = '1=0';
+            }
         }
 
         if (!empty($args['calendari_id'])) {
@@ -444,6 +457,7 @@ class CFA_Inscripcions_DB {
             'curs_id' => 0,
             'curs_ids' => array(), // Per filtrar per múltiples cursos (professors)
             'calendari_id' => 0,
+            'professor_horari_id' => 0, // Filtrar per horaris del professor
         );
 
         $args = wp_parse_args($args, $defaults);
@@ -476,6 +490,17 @@ class CFA_Inscripcions_DB {
             $values[] = $args['calendari_id'];
         }
 
+        // Filtrar per horaris del professor
+        if (!empty($args['professor_horari_id'])) {
+            $horari_filter = self::generar_filtre_horari_professor($args['professor_horari_id']);
+            if ($horari_filter) {
+                $where[] = $horari_filter['sql'];
+                $values = array_merge($values, $horari_filter['values']);
+            } else {
+                $where[] = '1=0';
+            }
+        }
+
         $sql = "SELECT COUNT(*) FROM " . self::$table_inscripcions . " WHERE " . implode(' AND ', $where);
 
         if (!empty($values)) {
@@ -483,6 +508,46 @@ class CFA_Inscripcions_DB {
         }
 
         return (int) $wpdb->get_var($sql);
+    }
+
+    /**
+     * Generar condicions SQL per filtrar inscripcions per horaris d'un professor.
+     * Retorna array amb 'sql' (condició) i 'values' (paràmetres) o false si no té horaris.
+     */
+    private static function generar_filtre_horari_professor($professor_id) {
+        global $wpdb;
+
+        // Obtenir tots els horaris del professor
+        $horaris = $wpdb->get_results($wpdb->prepare(
+            "SELECT h.calendari_id, h.dia_setmana, h.hora_inici, h.hora_fi, c.id as curs_id
+             FROM " . self::$table_horaris . " h
+             INNER JOIN " . self::$table_cursos . " c ON c.calendari_id = h.calendari_id
+             INNER JOIN " . self::$table_cursos_professors . " cp ON cp.curs_id = c.id AND cp.professor_id = %d
+             WHERE h.professor_id = %d AND h.actiu = 1",
+            $professor_id, $professor_id
+        ));
+
+        if (empty($horaris)) {
+            return false;
+        }
+
+        // Construir condicions: per cada horari, l'inscripció ha de coincidir en curs + dia setmana + rang hores
+        // MySQL WEEKDAY() retorna 0=Dilluns, 6=Diumenge (la nostra taula usa 1=Dilluns, 7=Diumenge)
+        $conditions = array();
+        $values = array();
+
+        foreach ($horaris as $horari) {
+            $conditions[] = "(curs_id = %d AND WEEKDAY(data_cita) = %d AND hora_cita >= %s AND hora_cita < %s)";
+            $values[] = (int) $horari->curs_id;
+            $values[] = (int) $horari->dia_setmana - 1; // Convertir 1-7 a 0-6 per WEEKDAY()
+            $values[] = $horari->hora_inici;
+            $values[] = $horari->hora_fi;
+        }
+
+        return array(
+            'sql' => '(' . implode(' OR ', $conditions) . ')',
+            'values' => $values,
+        );
     }
 
     /**
