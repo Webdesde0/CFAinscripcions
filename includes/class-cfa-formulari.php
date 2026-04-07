@@ -43,6 +43,14 @@ class CFA_Formulari {
             'curs' => '', // Preseleccionar un curs
         ), $atts);
 
+        // Comprovar si les inscripcions estan tancades
+        if (get_option('cfa_inscripcions_tancades', 0)) {
+            $text_tancat = get_option('cfa_inscripcions_text_tancat', __('Les inscripcions estan tancades en aquest moment. Torneu a consultar més endavant.', 'cfa-inscripcions'));
+            return '<div class="cfa-inscripcio-wrapper" id="cfa-inscripcio"><div class="cfa-inscripcions-tancades">' .
+                   '<p>' . esc_html($text_tancat) . '</p>' .
+                   '</div></div>';
+        }
+
         // Obtenir cursos actius
         $cursos = CFA_Inscripcions_DB::obtenir_cursos(array('actius_nomes' => true));
 
